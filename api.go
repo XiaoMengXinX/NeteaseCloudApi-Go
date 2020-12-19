@@ -15,6 +15,7 @@ func main() {
 	cookies = make(map[string]interface{})
 	cookies["MUSIC_U"] = ""
 	options["cookie"] = cookies
+	//options["limit"] = 2
 	options["resultType"] = "json"
 	//result := utils.GetSongDetail(data, options)
 	result := utils.SearchSong(arg, options)
