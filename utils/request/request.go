@@ -1,34 +1,84 @@
-package main
+package request
 
 import (
+	"crypto/md5"
+	"encoding/json"
 	"fmt"
-	"time"
+	"io/ioutil"
 	"math/rand"
 	"net/http"
-	"io/ioutil"
-	"strings"
-	"reflect"
 	netUrl "net/url"
+	"reflect"
 	"strconv"
+	"strings"
+	"time"
+
 	"../crypt"
 )
 
-func main() {
-	var url, data string
-	url = "https://music.163.com/eapi/v3/song/detail"
-	data = "params=11675D69CF25E0559750EF4BF81ECC680607C372872A3914F346ED123220A487D1D3764D2399095F2190002208159F14DA0AD23A941FD54017114FF3AB4EAE6B4EAD2EE19EA6C185932E6873F9AB06FFAC684A83B1169F65F7C61A8CFAE6442A2EBF137BF14B07E875E3E7E6F1163A2239A4AEABD25750A7DDCA71039E215F331F576F421BE7F88C98CCE22DD3ABB6D6"
-	var options map[string]interface{}
-    options = make(map[string]interface{})
-    var cookies map[string]interface{}
-    cookies = make(map[string]interface{})
-    cookies["buildver"] = "1575377963"
-    cookies["resolution"] = "2030x1080"
-    cookies["appver"] = "6.5.0"
-    cookies["MUSIC_U"] = "984e8c072dc9c670f40d019a3699f326b07414de7fe3522d93c1dd4fdb7286b833a649814e309366"
-    options["cookie"] = cookies
-	answer := CreateNewRequest(data,url,options)
-	fmt.Println(answer["status"].(int))
-	fmt.Println(string(crypt.AesDecryptECB(answer["body"].([]byte))))
+//func main() {
+//var url, str string
+//url = "https://music.163.com/eapi/v3/song/detail"
+//path := "/api/v3/song/detail"
+//str = "{\"c\":\"[{\\\"id\\\":1350638614,\\\"v\\\":0}]\",\"e_r\":\"true\",\"header\":\"{}\"}"
+//str = "/api/v3/song/detail-36cd479b6b5-{\"c\":\"[{\\\"id\\\":1350638614,\\\"v\\\":0}]\",\"e_r\":\"true\",\"header\":\"{}\"}-36cd479b6b5-3ed3c57a044e5e71cad3a3cb803f6459"
+//data := SpliceStr(path, str)
+//answer := CreateNewRequest(Format2Params(data), url, options)
+//fmt.Println(answer["status"].(int))
+//fmt.Println(string(crypt.AesDecryptECB(answer["body"].([]byte))))
+//}
+
+func EapiRequest(options map[string]interface{}) (result map[string]interface{}) {
+	data := SpliceStr(options["path"].(string), options["str"].(string))
+	answer := CreateNewRequest(Format2Params(data), options["url"].(string), options)
+	result = map[string]interface{}{
+		"status": 500,
+		"body": map[string]interface{}{},
+	}
+	if answer["status"].(int) == 200 {
+		decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
+		if _, ok := options["type"]; ok {
+			if options["type"] == "json" {
+				decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
+				result["status"] = answer["status"].(int)
+				result["body"] = string(decrypted)
+			} else {
+				bodyJson := map[string]interface{}{}
+				if err := json.Unmarshal(decrypted, &bodyJson); err == nil {
+					result["body"] = bodyJson
+					if _, ok := bodyJson["code"]; ok {
+						result["status"] = int(bodyJson["code"].(float64))
+					} else {
+						result["status"] = answer["status"].(int)
+					}
+			}
+			}
+		} else {
+			bodyJson := map[string]interface{}{}
+			if err := json.Unmarshal(decrypted, &bodyJson); err == nil {
+				result["body"] = bodyJson
+				if _, ok := bodyJson["code"]; ok {
+					result["status"] = int(bodyJson["code"].(float64))
+				} else {
+					result["status"] = answer["status"].(int)
+				}
+			}
+		}
+	}
+	return result
+}
+
+func SpliceStr(path string, data string) (result string) {
+	text := fmt.Sprintf("nobody%suse%smd5forencrypt", path, data)
+	md5 := md5.Sum([]byte(text))
+	md5str := fmt.Sprintf("%x", md5)
+	result = fmt.Sprintf("%s-36cd479b6b5-%s-36cd479b6b5-%s", path, data, md5str)
+	return result
+}
+
+func Format2Params(str string) (data string) {
+	data = fmt.Sprintf("params=%X", crypt.AesEncryptECB(str))
+	return data
 }
 
 func ChooseUserAgent() string {
@@ -58,20 +108,20 @@ func CreateNewRequest(data string, url string, options map[string]interface{}) m
 
 	answer := map[string]interface{}{
 		"status": 500,
-		"body": "string",
+		"body":   "string",
 	}
 
-    client := &http.Client{}
+	client := &http.Client{}
 	reqBody := strings.NewReader(data)
-    req, err := http.NewRequest("POST", url, reqBody)
-    if err != nil {
-        answer["status"] = 502
+	req, err := http.NewRequest("POST", url, reqBody)
+	if err != nil {
+		answer["status"] = 502
 		answer["body"] = map[string]interface{}{
 			"code": 502,
 			"msg":  err.Error(),
 		}
 		return answer
-    }
+	}
 
 	value, ok := options["cookie"]
 	if ok && reflect.ValueOf(value).Kind() == reflect.Map {
@@ -99,14 +149,14 @@ func CreateNewRequest(data string, url string, options map[string]interface{}) m
 			if ok {
 				return fmt.Sprintf("%v", val)
 			}
-			return "6.1.1"
+			return "6.5.0"
 		}()
 		header["versioncode"] = func() string {
 			val, ok := cookie["versioncode"]
 			if ok {
 				return fmt.Sprintf("%v", val)
 			}
-			return "140"
+			return "164"
 		}()
 		header["buildver"] = func() string {
 			val, ok := cookie["buildver"]
@@ -138,41 +188,40 @@ func CreateNewRequest(data string, url string, options map[string]interface{}) m
 		if ok {
 			header["MUSIC_A"] = cookieMusicA
 		}
-		
+
 		cookies := ""
 		for key, val := range header {
-				cookies += encodeURIComponent(key) + "=" + encodeURIComponent(fmt.Sprintf("%v", val)) + "; "
+			cookies += encodeURIComponent(key) + "=" + encodeURIComponent(fmt.Sprintf("%v", val)) + "; "
 		}
 		req.Header.Set("Cookie", strings.TrimRight(cookies, "; "))
-		fmt.Println(strings.TrimRight(cookies, "; "))
 	} else if ok {
 		req.Header.Set("Cookie", options["cookie"].(string))
-}
+	}
 
-    req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
-    req.Header.Set("User-Agent", ChooseUserAgent())
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", ChooseUserAgent())
 
-    resp, err := client.Do(req)
-    if err != nil {
-        answer["status"] = 502
+	resp, err := client.Do(req)
+	if err != nil {
+		answer["status"] = 502
 		answer["body"] = map[string]interface{}{
 			"code": 502,
 			"msg":  err.Error(),
 		}
 		return answer
-    }
+	}
 
-    defer resp.Body.Close()
-    body, err := ioutil.ReadAll(resp.Body)
-    if err != nil {
-        answer["status"] = 502
+	defer resp.Body.Close()
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		answer["status"] = 502
 		answer["body"] = map[string]interface{}{
 			"code": 502,
 			"msg":  err.Error(),
 		}
 		return answer
-    }
-    answer["body"] = []byte(body)
-    answer["status"] = resp.StatusCode
-    return answer
+	}
+	answer["body"] = []byte(body)
+	answer["status"] = resp.StatusCode
+	return answer
 }

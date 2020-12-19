@@ -6,7 +6,19 @@ import (
 
 const eapiKey = "e82ckenh8dichen8"
 
-func AesEncryptECB(origData []byte) (encrypted []byte) {
+func generateKey(key []byte) (genKey []byte) {
+	genKey = make([]byte, 16)
+	copy(genKey, key)
+	for i := 16; i < len(key); {
+		for j := 0; j < 16 && i < len(key); j, i = j+1, i+1 {
+			genKey[j] ^= key[i]
+		}
+	}
+	return genKey
+}
+
+func AesEncryptECB(data string) (encrypted []byte) {
+	origData := []byte(data)
 	key := []byte(eapiKey)
 	cipher, _ := aes.NewCipher(generateKey(key))
 	length := (len(origData) + aes.BlockSize) / aes.BlockSize
@@ -24,6 +36,7 @@ func AesEncryptECB(origData []byte) (encrypted []byte) {
 
 	return encrypted
 }
+
 func AesDecryptECB(encrypted []byte) (decrypted []byte) {
 	key := []byte(eapiKey)
 	cipher, _ := aes.NewCipher(generateKey(key))
@@ -39,15 +52,4 @@ func AesDecryptECB(encrypted []byte) (decrypted []byte) {
 	}
 
 	return decrypted[:trim]
-}
-
-func generateKey(key []byte) (genKey []byte) {
-	genKey = make([]byte, 16)
-	copy(genKey, key)
-	for i := 16; i < len(key); {
-		for j := 0; j < 16 && i < len(key); j, i = j+1, i+1 {
-			genKey[j] ^= key[i]
-		}
-	}
-	return genKey
 }
