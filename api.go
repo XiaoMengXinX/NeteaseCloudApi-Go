@@ -17,7 +17,7 @@ func main() {
 	options["cookie"] = cookies
 	//options["limit"] = 2
 	options["resultType"] = "json"
-	result := utils.GetSongUrl(arg, options)
+	result := utils.GetSearchSuggest(arg, options)
 	//result := utils.SearchSong(arg, options)
 	status := result["status"].(int)
 	data := result["body"]
