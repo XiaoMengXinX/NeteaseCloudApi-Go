@@ -15,7 +15,7 @@ func SearchSong(keywords string, options map[string]interface{}) (result map[str
 		limit = options["limit"].(int)
 	}
 	if _, ok := options["offset"]; ok {
-		limit = options["limit"].(int)
+		offset = options["offset"].(int)
 	}
 	options["str"] = fmt.Sprintf("{\"sub\":\"false\",\"s\":\"%v\",\"offset\":\"%v\",\"limit\":\"%v\",\"queryCorrect\":\"true\",\"strategy\":\"5\",\"header\":\"{}\",\"e_r\":\"true\"}", keywords, offset, limit)
 	result = request.EapiRequest(options)
