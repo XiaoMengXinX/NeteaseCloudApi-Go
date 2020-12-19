@@ -37,8 +37,8 @@ func EapiRequest(options map[string]interface{}) (result map[string]interface{})
 	}
 	if answer["status"].(int) == 200 {
 		decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
-		if _, ok := options["type"]; ok {
-			if options["type"] == "json" {
+		if _, ok := options["resultType"]; ok {
+			if options["resultType"] == "json" {
 				decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
 				result["status"] = answer["status"].(int)
 				result["body"] = string(decrypted)
