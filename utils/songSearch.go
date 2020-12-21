@@ -11,10 +11,10 @@ func SearchSong(keywords string, options map[string]interface{}) (result map[str
 	options["url"] = "https://music.163.com/eapi/v1/search/song/get"
 	limit := 10
 	offset := 0
-	if _, ok := options["limit"]; ok {
+	if _, ok := options["limit"].(int); ok {
 		limit = options["limit"].(int)
 	}
-	if _, ok := options["offset"]; ok {
+	if _, ok := options["offset"].(int); ok {
 		offset = options["offset"].(int)
 	}
 	options["str"] = fmt.Sprintf("{\"sub\":\"false\",\"s\":\"%v\",\"offset\":\"%v\",\"limit\":\"%v\",\"queryCorrect\":\"true\",\"strategy\":\"5\",\"header\":\"{}\",\"e_r\":\"true\"}", keywords, offset, limit)

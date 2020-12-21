@@ -12,10 +12,10 @@ func GetSongUrl(id string, options map[string]interface{}) (result map[string]in
 	options["url"] = "https://music.163.com/eapi/song/enhance/player/url/v1"
 	encodeType := "mp3"
 	level := "lossless"
-	if _, ok := options["encodeType"]; ok {
+	if _, ok := options["encodeType"].(string); ok {
 		encodeType = options["encodeType"].(string)
 	}
-	if _, ok := options["level"]; ok {
+	if _, ok := options["level"].(string); ok {
 		level = options["level"].(string)
 	}
 	ids := strings.Split(id, ",")
