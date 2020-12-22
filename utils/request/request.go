@@ -16,18 +16,6 @@ import (
 	"../crypt"
 )
 
-//func main() {
-//var url, str string
-//url = "https://music.163.com/eapi/v3/song/detail"
-//path := "/api/v3/song/detail"
-//str = "{\"c\":\"[{\\\"id\\\":1350638614,\\\"v\\\":0}]\",\"e_r\":\"true\",\"header\":\"{}\"}"
-//str = "/api/v3/song/detail-36cd479b6b5-{\"c\":\"[{\\\"id\\\":1350638614,\\\"v\\\":0}]\",\"e_r\":\"true\",\"header\":\"{}\"}-36cd479b6b5-3ed3c57a044e5e71cad3a3cb803f6459"
-//data := SpliceStr(path, str)
-//answer := CreateNewRequest(Format2Params(data), url, options)
-//fmt.Println(answer["status"].(int))
-//fmt.Println(string(crypt.AesDecryptECB(answer["body"].([]byte))))
-//}
-
 func EapiRequest(options map[string]interface{}) (result map[string]interface{}) {
 	data := SpliceStr(options["path"].(string), options["str"].(string))
 	answer := CreateNewRequest(Format2Params(data), options["url"].(string), options)

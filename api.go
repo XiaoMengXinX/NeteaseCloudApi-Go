@@ -17,7 +17,8 @@ func main() {
 	options["cookie"] = cookies
 	//options["limit"] = 2
 	//options["resultType"] = "json"
-	result := utils.GetSongUrl(arg, options)
+	//result := utils.DownloadSong(arg, options)
+	utils.DownloadPlaylist(arg, options)
 	//result := utils.SearchSong(arg, options)
 	//status := result["status"].(int)
 	//data := result["body"]
@@ -26,9 +27,10 @@ func main() {
 
 	//fmt.Printf("%d\n", status)
 
-	for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
-		fmt.Println(v.(map[string]interface{})["url"])
-	}
+	//for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
+		//fmt.Println(v.(map[string]interface{})["url"])
+		//fmt.Println(int(v.(map[string]interface{})["id"].(float64)))
+	//}
 
 	//walk(result["body"])
 }
