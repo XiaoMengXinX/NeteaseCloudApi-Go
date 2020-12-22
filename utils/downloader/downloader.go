@@ -82,7 +82,7 @@ func (d *FileDownloader) Run() error {
 	}
 	d.fileSize = fileTotalSize
 	
-	log.Printf("开始下载: %v", d.outputFileName)
+	log.Printf("开始下载: %v 线程数: %v", d.outputFileName, d.totalPart)
 
 	jobs := make([]filePart, d.totalPart)
 	eachSize := fileTotalSize / d.totalPart
