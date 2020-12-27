@@ -20,7 +20,17 @@ func DownloadSong(id string, options map[string]interface{}) {
 	for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
 		if v.(map[string]interface{})["url"] != nil {
 			url = v.(map[string]interface{})["url"].(string)
-			filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),path.Ext(path.Base(url)))
+			switch path.Ext(path.Base(url)){
+    		case ".mp3":
+        		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".mp3")
+			case ".flac":
+        		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".flac")
+        	case ".m4a":
+        		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".m4a")
+    		default:
+        		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".mp3")
+    		}
+			//filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),path.Ext(path.Base(url)))
 			downloader := downloader.NewFileDownloader(url, filename, "", threads, "")
 			if err := downloader.Run(); err != nil {
 			log.Fatal(err)
