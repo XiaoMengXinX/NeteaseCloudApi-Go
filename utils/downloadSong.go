@@ -10,12 +10,16 @@ import (
 )
 
 func DownloadSong(id string, options map[string]interface{}) {
-	var url, filename string
+	var url, filename, savePath string
+	savePath = "./"
 	startTime := time.Now()
 	result := GetSongUrl(id, options)
 	threads := 4
 	if _, ok := options["threads"].(int); ok {
 		threads = options["threads"].(int)
+	}
+	if _, ok := options["savePath"].(string); ok {
+		savePath = options["savePath"].(string)
 	}
 	for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
 		if v.(map[string]interface{})["url"] != nil {
@@ -31,7 +35,7 @@ func DownloadSong(id string, options map[string]interface{}) {
         		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".mp3")
     		}
 			//filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),path.Ext(path.Base(url)))
-			downloader := downloader.NewFileDownloader(url, filename, "", threads, "")
+			downloader := downloader.NewFileDownloader(url, filename, savePath, threads, "")
 			if err := downloader.Run(); err != nil {
 			log.Fatal(err)
 			}
