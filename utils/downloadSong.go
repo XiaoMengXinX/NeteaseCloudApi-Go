@@ -9,7 +9,7 @@ import (
 	"./downloader"
 )
 
-func DownloadSong(id string, options map[string]interface{}) {
+func DownloadSong(id string, options map[string]interface{}) (fileName []string) {
 	var url, filename, savePath string
 	savePath = "./"
 	startTime := time.Now()
@@ -33,7 +33,8 @@ func DownloadSong(id string, options map[string]interface{}) {
         		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".m4a")
     		default:
         		filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),".mp3")
-    		}
+			}
+			fileName = append(fileName, filename)
 			//filename = fmt.Sprintf("%v%v",int(v.(map[string]interface{})["id"].(float64)),path.Ext(path.Base(url)))
 			downloader := downloader.NewFileDownloader(url, filename, savePath, threads, "")
 			if err := downloader.Run(); err != nil {
@@ -42,4 +43,5 @@ func DownloadSong(id string, options map[string]interface{}) {
 			fmt.Printf("%v 下载完成 耗时: %f second\n\n", filename, time.Now().Sub(startTime).Seconds())
 		}
 	}
+	return fileName
 }

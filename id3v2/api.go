@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"os"
 
@@ -22,15 +23,15 @@ func main() {
 	//utils.DownloadPlaylist(arg, options)
 	result := utils.GetSongDetail(arg, options)
 	//status := result["status"].(int)
-	//data := result["body"]
-	data := result["body"].(map[string]interface{})["songs"].([]interface{})[0].(map[string]interface{})["al"].(map[string]interface{})["picUrl"]
+	data, _ := json.Marshal(result["body"])
+	//data := result["body"].(map[string]interface{})["songs"].([]interface{})[0].(map[string]interface{})["al"].(map[string]interface{})["name"]
 	fmt.Printf("%s\n", data)
 
 	//fmt.Printf("%d\n", status)
 
 	//for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
-		//fmt.Println(v.(map[string]interface{})["url"])
-		//fmt.Println(int(v.(map[string]interface{})["id"].(float64)))
+	//fmt.Println(v.(map[string]interface{})["url"])
+	//fmt.Println(int(v.(map[string]interface{})["id"].(float64)))
 	//}
 
 	//walk(result["body"])
