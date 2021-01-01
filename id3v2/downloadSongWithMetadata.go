@@ -23,8 +23,9 @@ import (
 )
 
 const (
-	picPath   = "./pic/"
-	musicPath = "./music/"
+	picPath       = "./pic/"
+	musicPath     = "./music/"
+	fileNameStyle = 1
 )
 
 func main() {
@@ -38,8 +39,8 @@ func main() {
 	CheckPathExists(picPath)
 	CheckPathExists(musicPath)
 
-	//DownloadSongWithMetadata(id, options)
-	DownloadPLaylistWithMetadata(id, options)
+	DownloadSongWithMetadata(id, options)
+	//DownloadPLaylistWithMetadata(id, options)
 }
 
 func DownloadSongWithMetadata(id string, options map[string]interface{}) {
@@ -56,49 +57,64 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			filename := fileName[i]
 			musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
 			//fmt.Println(marker)
-			picName := DownloadPic(id, result)
+			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
+			var newFilename string
+			switch fileNameStyle {
+			case 1:
+				newFilename = fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), strings.Replace(name, "/", " ", -1), path.Ext(filename))
+			case 2:
+				newFilename = fmt.Sprintf("%v - %v%v", strings.Replace(name, "/", " ", -1), strings.Replace(artist, "/", ",", -1), path.Ext(filename))
+			case 3:
+				newFilename = fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename))
+			}
+			err := os.Rename(musicPath+filename, musicPath+newFilename)
+			if err != nil {
+				panic(err)
+			}
 		}
 	}
 }
 
 func DownloadPLaylistWithMetadata(id string, options map[string]interface{}) {
 	result := utils.GetPlaylistDetail(id, options)
-	if _, ok := options["s"].(int); ok {
-		var mid string
-		var i int = 0
-		for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
-			if i < options["s"].(int) {
-				if i == 0 {
-					mid = fmt.Sprintf("%v",int(v.(map[string]interface{})["id"].(float64)))
-				} else {
-					mid = fmt.Sprintf("%v,%v",mid,int(v.(map[string]interface{})["id"].(float64)))
-				}
-				if i == options["s"].(int)-1 {
-					i = 0
-					DownloadSongWithMetadata(mid, options)
-				} else {
-					if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{})) - t == 1 {
+	if _, ok := result["body"].(map[string]interface{})["playlist"]; ok {
+		if _, ok := options["s"].(int); ok {
+			var mid string
+			var i int = 0
+			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
+				if i < options["s"].(int) {
+					if i == 0 {
+						mid = fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64)))
+					} else {
+						mid = fmt.Sprintf("%v,%v", mid, int(v.(map[string]interface{})["id"].(float64)))
+					}
+					if i == options["s"].(int)-1 {
+						i = 0
 						DownloadSongWithMetadata(mid, options)
 					} else {
-						i++
+						if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}))-t == 1 {
+							DownloadSongWithMetadata(mid, options)
+						} else {
+							i++
+						}
 					}
 				}
 			}
-		}
-	} else {
-		for _, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
-			var mid string
-			mid = fmt.Sprintf("%v",int(v.(map[string]interface{})["id"].(float64)))
-			//fmt.Println(mid)
-			DownloadSongWithMetadata(mid, options)
+		} else {
+			for _, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
+				var mid string
+				mid = fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64)))
+				//fmt.Println(mid)
+				DownloadSongWithMetadata(mid, options)
+			}
 		}
 	}
 }
 
-func DownloadPic(id string, result map[string]interface{}) (picName string) {
+func DownloadPic(id string, i int, result map[string]interface{}) (picName string) {
 	picName = id + ".jpg"
-	picurl := fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[0].(map[string]interface{})["al"].(map[string]interface{})["picUrl"])
+	picurl := fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["al"].(map[string]interface{})["picUrl"])
 	resp, err := http.Get(picurl)
 	if err != nil {
 		panic(err)
@@ -272,18 +288,18 @@ func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	}
 }
 
-func CheckPathExists(path string) (bool) {
-    _, err := os.Stat(path)
-    if err == nil {
-        return true
-    }
-    if os.IsNotExist(err) {
+func CheckPathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil {
+		return true
+	}
+	if os.IsNotExist(err) {
 		err := os.Mkdir(path, os.ModePerm)
-        if err != nil {
-            fmt.Printf("mkdir %v failed: %v\n", path, err)
-        }
-        return false
+		if err != nil {
+			fmt.Printf("mkdir %v failed: %v\n", path, err)
+		}
+		return false
 	}
 	fmt.Printf("Error: %v\n", err)
-    return false
+	return false
 }
