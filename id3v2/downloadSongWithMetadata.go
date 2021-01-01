@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/base64"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
@@ -30,7 +31,6 @@ const (
 )
 
 func main() {
-	id := os.Args[1]
 	var options, cookies map[string]interface{}
 	options = make(map[string]interface{})
 	cookies = make(map[string]interface{})
@@ -40,8 +40,17 @@ func main() {
 	CheckPathExists(picPath)
 	CheckPathExists(musicPath)
 
-	DownloadSongWithMetadata(id, options)
-	//DownloadPLaylistWithMetadata(id, options)
+	var musicid = flag.String("m", "", "歌曲id")
+	var playlistid = flag.String("p", "", "歌单id")
+
+	flag.Parse()
+	if *musicid != "" {
+		DownloadSongWithMetadata(*musicid, options)
+	}
+	if *playlistid != "" {
+		DownloadPLaylistWithMetadata(*playlistid, options)
+	}
+	fmt.Println(*playlistid)
 }
 
 func DownloadSongWithMetadata(id string, options map[string]interface{}) {
