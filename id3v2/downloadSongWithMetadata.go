@@ -23,7 +23,7 @@ import (
 )
 
 const (
-	picPath = "./pic/"
+	picPath   = "./pic/"
 	musicPath = "./music/"
 )
 
@@ -49,7 +49,7 @@ func main() {
 			filename := fileName[i]
 			musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
 			//fmt.Println(marker)
-			picName := DownloadPic(id,result)
+			picName := DownloadPic(id, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
 		}
 	}
@@ -120,7 +120,7 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 		Alias         []interface{} `json:"alias"`
 	}{data["format"].(string), data["musicId"].(int), data["musicName"].(string), data["artist"].([]interface{}), data["album"].(string), data["albumId"].(int), data["albumPicDocId"].(int), data["albumPic"].(string), data["mvId"].(int), data["bitRate"].(int), data["duration"].(int), data["alias"].([]interface{})}
 	jsonData, _ := json.Marshal(jsonStruct)
-	marker = fmt.Sprintf("163 key(Don't modify):%v",string(base64.StdEncoding.EncodeToString(crypt.MarkerAesEncryptECB("music:"+string(jsonData)))))
+	marker = fmt.Sprintf("163 key(Don't modify):%v", string(base64.StdEncoding.EncodeToString(crypt.MarkerAesEncryptECB("music:"+string(jsonData)))))
 	//fmt.Println(string(jsonData))
 	return marker
 }
@@ -205,7 +205,7 @@ func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
 		tag.SetAlbum(album)
 	}
 
-	artwork, err := ioutil.ReadFile(picPath+picName)
+	artwork, err := ioutil.ReadFile(picPath + picName)
 	if err != nil {
 		log.Fatal("Error while reading AlbumPic", err)
 	}
