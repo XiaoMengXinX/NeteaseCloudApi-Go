@@ -35,7 +35,14 @@ func main() {
 	cookies["MUSIC_U"] = "007FAE83E56DA25DEA67D9A43C259E0DD55472DCBCA3C23B437FE930C561430891232A84D785314719AD0B0B936E24166705E05F091742F24052CCFE4937AFB3C9C1F2542B6D67F58C93D0CBEF45AF3FF1B2DAEC833D5A33FA576AA25616726FC3C1E02E9E512240844F13C60C5B3C2EF77182821D294CCFCC7359065F1DEA9D03F7DD3657CCD0950782EBE415DC51C88B72D61C898DF9E3B4951BCD941949E177B6842EFB795075CC8ED43678E06B6E219D0992F75258A8F7B86B088B030EEAEF320E6A7223925B7AAEF112CCFCF25123898935AAEBB8107669CBC35DF54A2F5BC26353E0A238CA3A8BA1FC29A82326041BCB5542367768B567912DBE1AF0C8EDAAC3FA94BB74BE94060C51FDF572B3940E4DC23D32009869B892E45E67D9827CC48AF8EBA7C74C16012CF836181BBF83FA2600F3FCE31C954223DCEBC9FA410A81D7B7A16810C06F6643E3CD519FE082FE742A52FCC87E1902899CD39B77FAC86C54BC7DE8637AD6841A7FDEC5F23DF4CB646A165D47D6ED2AF551D18D834E60"
 	options["cookie"] = cookies
 	options["savePath"] = musicPath
+	CheckPathExists(picPath)
+	CheckPathExists(musicPath)
 
+	//DownloadSongWithMetadata(id, options)
+	DownloadPLaylistWithMetadata(id, options)
+}
+
+func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 	result := utils.GetSongDetail(id, options)
 	fileName := utils.DownloadSong(id, options)
 
@@ -51,6 +58,40 @@ func main() {
 			//fmt.Println(marker)
 			picName := DownloadPic(id, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
+		}
+	}
+}
+
+func DownloadPLaylistWithMetadata(id string, options map[string]interface{}) {
+	result := utils.GetPlaylistDetail(id, options)
+	if _, ok := options["s"].(int); ok {
+		var mid string
+		var i int = 0
+		for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
+			if i < options["s"].(int) {
+				if i == 0 {
+					mid = fmt.Sprintf("%v",int(v.(map[string]interface{})["id"].(float64)))
+				} else {
+					mid = fmt.Sprintf("%v,%v",mid,int(v.(map[string]interface{})["id"].(float64)))
+				}
+				if i == options["s"].(int)-1 {
+					i = 0
+					DownloadSongWithMetadata(mid, options)
+				} else {
+					if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{})) - t == 1 {
+						DownloadSongWithMetadata(mid, options)
+					} else {
+						i++
+					}
+				}
+			}
+		}
+	} else {
+		for _, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
+			var mid string
+			mid = fmt.Sprintf("%v",int(v.(map[string]interface{})["id"].(float64)))
+			//fmt.Println(mid)
+			DownloadSongWithMetadata(mid, options)
 		}
 	}
 }
@@ -229,4 +270,20 @@ func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	if err = tag.Save(); err != nil {
 		log.Fatal("Error while saving ", err)
 	}
+}
+
+func CheckPathExists(path string) (bool) {
+    _, err := os.Stat(path)
+    if err == nil {
+        return true
+    }
+    if os.IsNotExist(err) {
+		err := os.Mkdir(path, os.ModePerm)
+        if err != nil {
+            fmt.Printf("mkdir %v failed: %v\n", path, err)
+        }
+        return false
+	}
+	fmt.Printf("Error: %v\n", err)
+    return false
 }
