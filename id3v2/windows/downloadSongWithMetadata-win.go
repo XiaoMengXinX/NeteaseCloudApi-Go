@@ -13,13 +13,13 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
+	"syscall"
 
-	"../utils"
-	"../utils/crypt"
-	"github.com/bogem/id3v2"
+	"../../utils"
+	"../../utils/crypt"
+	"./id3v2"
 	"github.com/goulash/audio/flac"
 	"github.com/tcolgate/mp3"
 )
@@ -69,11 +69,7 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
 
-			var replacer = strings.NewReplacer("/", " ")
-			sysType := runtime.GOOS
-			if sysType == "windows" {
-				replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
-			}
+			var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ", "	", "")
 
 			var newFilename string
 			switch fileNameStyle {
@@ -84,9 +80,11 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			case 3:
 				newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
 			}
-			err := os.Rename(musicPath+filename, musicPath+newFilename)
+			fmt.Println(newFilename + "\n")
+			err := movefile(musicPath+filename, musicPath+newFilename)
 			if err != nil {
-				panic(err)
+				fmt.Println(err)
+				delfile(musicPath + filename)
 			}
 		}
 	}
@@ -307,6 +305,7 @@ func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	if err = tag.Save(); err != nil {
 		log.Fatal("Error: ", err)
 	}
+	tag.Close()
 }
 
 func CheckPathExists(path string) bool {
@@ -323,4 +322,25 @@ func CheckPathExists(path string) bool {
 	}
 	fmt.Printf("Error: %v\n", err)
 	return false
+}
+
+func movefile(oldpath, newpath string) error { //跨卷移动
+	from, err := syscall.UTF16PtrFromString(oldpath)
+	if err != nil {
+		return err
+	}
+	to, err := syscall.UTF16PtrFromString(newpath)
+	if err != nil {
+		return err
+	}
+	return syscall.MoveFile(from, to) //windows API
+
+}
+
+func delfile(path string) error {
+	file, err := syscall.UTF16PtrFromString(path)
+	if err != nil {
+		return err
+	}
+	return syscall.DeleteFile(file)
 }
