@@ -13,7 +13,6 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"runtime"
 	"strconv"
 	"strings"
 
@@ -78,11 +77,12 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
 
-			var replacer = strings.NewReplacer("/", " ")
-			sysType := runtime.GOOS
-			if sysType == "windows" {
-				replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
-			}
+			//var replacer = strings.NewReplacer("/", " ")
+			//sysType := runtime.GOOS
+			//if sysType == "windows" {
+			//	replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
+			//}
+			var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
 
 			var newFilename string
 			switch fileNameStyle {
