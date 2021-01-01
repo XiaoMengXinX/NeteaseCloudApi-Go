@@ -12,6 +12,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"runtime"
 	"strconv"
 	"strings"
 
@@ -59,14 +60,21 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			//fmt.Println(marker)
 			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
 			AddId3v2(filename, name, artist, album, picName, musicMarker)
+
+			var replacer = strings.NewReplacer("/", " ")
+			sysType := runtime.GOOS
+			if sysType == "windows" {
+				replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
+			}
+
 			var newFilename string
 			switch fileNameStyle {
 			case 1:
-				newFilename = fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), strings.Replace(name, "/", " ", -1), path.Ext(filename))
+				newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), name, path.Ext(filename)))
 			case 2:
-				newFilename = fmt.Sprintf("%v - %v%v", strings.Replace(name, "/", " ", -1), strings.Replace(artist, "/", ",", -1), path.Ext(filename))
+				newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", name, strings.Replace(artist, "/", ",", -1), path.Ext(filename)))
 			case 3:
-				newFilename = fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename))
+				newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
 			}
 			err := os.Rename(musicPath+filename, musicPath+newFilename)
 			if err != nil {
