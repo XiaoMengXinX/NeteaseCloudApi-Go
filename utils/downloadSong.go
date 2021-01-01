@@ -41,6 +41,8 @@ func DownloadSong(id string, options map[string]interface{}) (fileName []string)
 			log.Fatal(err)
 			}
 			fmt.Printf("%v 下载完成 耗时: %f second\n\n", filename, time.Now().Sub(startTime).Seconds())
+		} else {
+			fileName = append(fileName, "null")
 		}
 	}
 	return fileName

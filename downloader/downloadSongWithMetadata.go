@@ -70,6 +70,9 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			//fmt.Println(artistMap)
 			//fmt.Println(name, artist, album)
 			filename := fileName[i]
+			if filename == "null" {
+				continue
+			}
 			musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
 			//fmt.Println(marker)
 			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
