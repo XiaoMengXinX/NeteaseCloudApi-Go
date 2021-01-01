@@ -255,6 +255,10 @@ func GetMp3Info(filename string, options map[string]interface{}) (bitRate, durat
 	}
 	bitRate = int(f.Header().BitRate())
 	duration = int(math.Floor(t * 1000))
+	err = r.Close()
+    if err != nil {
+		fmt.Println(err)
+    }
 
 	return bitRate, duration
 }
