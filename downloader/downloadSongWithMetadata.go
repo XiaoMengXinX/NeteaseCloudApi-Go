@@ -43,6 +43,7 @@ func main() {
 	var musicid = flag.String("m", "", "歌曲id")
 	var playlistid = flag.String("p", "", "歌单id")
 	var playlistoffset = flag.Int("s", 0, "歌单偏移量")
+	var encrypted = flag.String("enc", "", "Only for test")
 
 	flag.Parse()
 	if *musicid != "" {
@@ -54,6 +55,9 @@ func main() {
 		} else {
 			DownloadPLaylistWithMetadata(*playlistid, 0, options)
 		}
+	}
+	if *encrypted != "" {
+		fmt.Println(Decrypt163key(*encrypted))
 	}
 }
 
@@ -179,9 +183,15 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 		data["album"] = ""
 		data["albumId"] = 0
 	}
+	//data["albumPic"] = strings.Replace(albumPic, "/", "\\/", -1)
 	data["albumPic"] = albumPic
 	data["albumPicDocId"], _ = strconv.Atoi(albumPicDocId)
-	data["mvId"], _ = strconv.Atoi(fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"]))
+	if _, ok := result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"].(float64) ; ok {
+		data["mvId"] = int(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"].(float64))
+	} else {
+		data["mvId"] = 0
+	}
+	data["flag"] = 0
 
 	var bitRate, duration int
 	switch data["format"].(string) {
@@ -204,13 +214,15 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 		AlbumPicDocId int           `json:"albumPicDocId"`
 		AlbumPic      string        `json:"albumPic"`
 		MvId          int           `json:"mvId"`
+		Flag		  int			`json:"flag"`
 		Bitrate       int           `json:"bitrate"`
 		Duration      int           `json:"duration"`
 		Alias         []interface{} `json:"alias"`
-	}{data["format"].(string), data["musicId"].(int), data["musicName"].(string), data["artist"].([]interface{}), data["album"].(string), data["albumId"].(int), data["albumPicDocId"].(int), data["albumPic"].(string), data["mvId"].(int), data["bitRate"].(int), data["duration"].(int), data["alias"].([]interface{})}
-	jsonData, _ := json.Marshal(jsonStruct)
+	}{data["format"].(string), data["musicId"].(int), data["musicName"].(string), data["artist"].([]interface{}), data["album"].(string), data["albumId"].(int), data["albumPicDocId"].(int), data["albumPic"].(string), data["mvId"].(int), data["flag"].(int), data["bitRate"].(int), data["duration"].(int), data["alias"].([]interface{})}
+	jsondata, _ := json.Marshal(jsonStruct)
+	jsonData := strings.Replace(string(jsondata), "/", "\\/", -1)
 	marker = fmt.Sprintf("163 key(Don't modify):%v", string(base64.StdEncoding.EncodeToString(crypt.MarkerAesEncryptECB("music:"+string(jsonData)))))
-	//fmt.Println(string(jsonData))
+	fmt.Println(string(jsonData))
 	return marker
 }
 
@@ -339,4 +351,9 @@ func CheckPathExists(path string) bool {
 	}
 	fmt.Printf("Error: %v\n", err)
 	return false
+}
+
+func Decrypt163key(encrypted string) (decrypted string) {
+	data, _ := base64.StdEncoding.DecodeString(encrypted)
+	return string(crypt.MarkerAesDecryptECB(data))
 }
