@@ -367,7 +367,7 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	var mime string = "image/png"
 	switch fileType {
 	case "jpg":
-		mime = "image/jpg"
+		mime = "image/jpeg"
 	case "png":
 		mime = "image/png"
 	}
