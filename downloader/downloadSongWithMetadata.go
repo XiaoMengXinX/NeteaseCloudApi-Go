@@ -16,11 +16,13 @@ import (
 	"strconv"
 	"strings"
 
+	"./tools"
 	"../utils"
 	"../utils/crypt"
 	"github.com/bogem/id3v2"
 	"github.com/goulash/audio/flac"
 	"github.com/tcolgate/mp3"
+	"github.com/yoki123/ncmdump/tag"
 )
 
 const (
@@ -79,7 +81,14 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
 			//fmt.Println(marker)
 			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
-			AddId3v2(filename, name, artist, album, picName, musicMarker)
+
+			format := strings.Replace(path.Ext(filename), ".", "", -1)
+			switch format {
+			case "mp3":
+				AddMp3Id3v2(filename, name, artist, album, picName, musicMarker)
+			case "flac":
+				AddFlacId3v2(filename, name, artist, album, picName, musicMarker)
+			}
 
 			//var replacer = strings.NewReplacer("/", " ")
 			//sysType := runtime.GOOS
@@ -219,10 +228,10 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 		Duration      int           `json:"duration"`
 		Alias         []interface{} `json:"alias"`
 	}{data["format"].(string), data["musicId"].(int), data["musicName"].(string), data["artist"].([]interface{}), data["album"].(string), data["albumId"].(int), data["albumPicDocId"].(int), data["albumPic"].(string), data["mvId"].(int), data["flag"].(int), data["bitRate"].(int), data["duration"].(int), data["alias"].([]interface{})}
-	jsondata, _ := json.Marshal(jsonStruct)
-	jsonData := strings.Replace(string(jsondata), "/", "\\/", -1)
+	jsonData, _ := json.Marshal(jsonStruct)
+	//jsonData := strings.Replace(string(jsondata), "/", "\\/", -1)
 	marker = fmt.Sprintf("163 key(Don't modify):%v", string(base64.StdEncoding.EncodeToString(crypt.MarkerAesEncryptECB("music:"+string(jsonData)))))
-	fmt.Println(string(jsonData))
+	//fmt.Println(string(jsonData))
 	return marker
 }
 
@@ -295,11 +304,12 @@ func GetFlacInfo(filename string, options map[string]interface{}) (bitRate, dura
 	data, _ := flac.ReadFileMetadata(options["savePath"].(string) + filename)
 	length := data.Length()
 	duration = int(length / 1000000)
-	bitRate = int((file.Size() * 8000) / int64(duration))
+	bitRate = (int(file.Size()) * 8) / (duration / 1000)
+
 	return bitRate, duration
 }
 
-func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
+func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string) {
 	tag, _ := id3v2.Open(musicPath+filename, id3v2.Options{Parse: false})
 	defer tag.Close()
 
@@ -333,6 +343,42 @@ func AddId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	tag.AddCommentFrame(comment)
 
 	if err = tag.Save(); err != nil {
+		log.Fatal("Error: ", err)
+	}
+}
+
+func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string) {
+	tag, err := tag.NewFlacTagger(musicPath+filename)
+	if err != nil {
+		log.Fatal(err)
+	}
+	tag.SetTitle(name)
+	
+	artists := make([]string, 0)
+	artists = append(artists, artist)
+	tag.SetArtist(artists)
+
+	if album != "" {
+		tag.SetAlbum(album)
+	}
+
+	artwork, err := ioutil.ReadFile(picPath + picName)
+	fileType := tools.GetFileType(artwork)
+	var mime string = "image/png"
+	switch fileType {
+	case "jpg":
+		mime = "image/jpg"
+	case "png":
+		mime = "image/png"
+	}
+	err = tag.SetCover(artwork, mime)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	tag.SetComment(MusicMarker)
+	err = tag.Save()
+	if err != nil {
 		log.Fatal("Error: ", err)
 	}
 }
