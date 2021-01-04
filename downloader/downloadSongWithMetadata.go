@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"flag"
 	"fmt"
+	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"log"
@@ -16,7 +18,6 @@ import (
 	"strconv"
 	"strings"
 
-	"./tools"
 	"../utils"
 	"../utils/crypt"
 	"github.com/bogem/id3v2"
@@ -325,14 +326,24 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string) {
 	if err != nil {
 		log.Fatal("Error while reading AlbumPic", err)
 	}
-	pic := id3v2.PictureFrame{
-		Encoding:    id3v2.EncodingUTF8,
-		MimeType:    "image/jpeg",
-		PictureType: id3v2.PTFrontCover,
-		Description: "Front cover",
-		Picture:     artwork,
+	var mime string
+	fileCode := bytesToHexString(artwork)
+	if strings.HasPrefix(fileCode, "ffd8ffe000104a464946") {
+		mime = "image/jpeg"
 	}
-	tag.AddAttachedPicture(pic)
+	if strings.HasPrefix(fileCode, "89504e470d0a1a0a0000") {
+		mime = "image/png"
+	}
+	if mime != "" {
+		pic := id3v2.PictureFrame{
+			Encoding:    id3v2.EncodingUTF8,
+			MimeType:    mime,
+			PictureType: id3v2.PTFrontCover,
+			Description: "Front cover",
+			Picture:     artwork,
+		}
+		tag.AddAttachedPicture(pic)
+	}
 
 	comment := id3v2.CommentFrame{
 		Encoding:    id3v2.EncodingUTF8,
@@ -363,17 +374,21 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string) {
 	}
 
 	artwork, err := ioutil.ReadFile(picPath + picName)
-	fileType := tools.GetFileType(artwork)
-	var mime string = "image/png"
-	switch fileType {
-	case "jpg":
+
+	var mime string
+	fileCode := bytesToHexString(artwork)
+	if strings.HasPrefix(fileCode, "ffd8ffe000104a464946") {
 		mime = "image/jpeg"
-	case "png":
+	}
+	if strings.HasPrefix(fileCode, "89504e470d0a1a0a0000") {
 		mime = "image/png"
 	}
-	err = tag.SetCover(artwork, mime)
-	if err != nil {
-		log.Fatal(err)
+
+	if mime != "" {
+		err = tag.SetCover(artwork, mime)
+		if err != nil {
+			log.Fatal(err)
+		}
 	}
 
 	tag.SetComment(MusicMarker)
@@ -402,4 +417,21 @@ func CheckPathExists(path string) bool {
 func Decrypt163key(encrypted string) (decrypted string) {
 	data, _ := base64.StdEncoding.DecodeString(encrypted)
 	return string(crypt.MarkerAesDecryptECB(data))
+}
+
+func bytesToHexString(src []byte) string {
+	res := bytes.Buffer{}
+	if src == nil || len(src) <= 0 {
+		return ""
+	}
+	temp := make([]byte, 0)
+	for _, v := range src {
+		sub := v & 0xFF
+		hv := hex.EncodeToString(append(temp, sub))
+		if len(hv) < 2 {
+			res.WriteString(strconv.FormatInt(int64(0), 10))
+		}
+		res.WriteString(hv)
+	}
+	return res.String()
 }
