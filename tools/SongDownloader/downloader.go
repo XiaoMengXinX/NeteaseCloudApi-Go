@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../utils"
-	"../utils/crypt"
+	"../../utils"
+	"../../utils/crypt"
 	"github.com/bogem/id3v2"
 	"github.com/goulash/audio/flac"
 	"github.com/tcolgate/mp3"
@@ -107,10 +107,12 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			case 3:
 				newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
 			}
-			err := os.Rename(musicPath+filename, musicPath+newFilename)
-			fmt.Println(newFilename + "\n")
-			if err != nil {
-				panic(err)
+			if fileNameStyle != 0 {
+				err := os.Rename(musicPath+filename, musicPath+newFilename)
+				fmt.Println(newFilename + "\n")
+				if err != nil {
+					log.Fatal(err)
+				}
 			}
 		}
 	}
@@ -163,17 +165,17 @@ func DownloadPic(id string, i int, result map[string]interface{}) (picName strin
 	picurl := fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["al"].(map[string]interface{})["picUrl"])
 	resp, err := http.Get(picurl)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer resp.Body.Close()
 	out, err := os.Create(picPath + picName)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return picName
 }
