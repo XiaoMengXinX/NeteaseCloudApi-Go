@@ -18,7 +18,7 @@ func main() {
 	options["s"] = 5
 	//options["savePath"] = "./download"
 	//options["limit"] = 2
-	options["resultType"] = "json"
+	//options["resultType"] = "json"
 	//result := utils.DownloadSong(arg, options)
 	//utils.DownloadPlaylist(arg, options)
 	result := utils.GetSongDetail(arg, options)
