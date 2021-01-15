@@ -1,21 +1,21 @@
 package main
 
 import (
-  "log"
-  "os"
-  "fmt"
-  "../SongDownloader/utils"
-  "../../utils"
-  "strings"
-  "path"
-  "path/filepath"
+	"fmt"
+	"log"
+	"os"
+	"path"
+	"path/filepath"
+	"strings"
 
-  "github.com/urfave/cli"
+  "github.com/XiaoMengXinX/NeteaseCloudApi-Go/tools/SongDownloader/utils"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
+	"github.com/urfave/cli/v2"
 )
 
 const (
-	picPath       = "./pic/"
-	musicPath     = "./temp/"
+	picPath   = "./pic/"
+	musicPath = "./temp/"
 )
 
 func main() {
@@ -23,26 +23,26 @@ func main() {
 	SongDownloader.CheckPathExists(musicPath)
 	var filename string
 
-  app := &cli.App{
-    Flags: []cli.Flag {
-      &cli.StringFlag{
-        Name:        "input",
-        Aliases: []string{"i"},
-        Usage:       "music file name",
-        Destination: &filename,
-      },
-    },
-    Action: func(c *cli.Context) error {
-      var id string = strings.Replace(filepath.Base(path.Base(filename)), path.Ext(filename), "", -1)
-      SongInfoAdder(id, filename)
-      return nil
-    },
-  }
+	app := &cli.App{
+		Flags: []cli.Flag{
+			&cli.StringFlag{
+				Name:        "input",
+				Aliases:     []string{"i"},
+				Usage:       "music file name",
+				Destination: &filename,
+			},
+		},
+		Action: func(c *cli.Context) error {
+			var id string = strings.Replace(filepath.Base(path.Base(filename)), path.Ext(filename), "", -1)
+			SongInfoAdder(id, filename)
+			return nil
+		},
+	}
 
-  err := app.Run(os.Args)
-  if err != nil {
-    log.Fatal(err)
-  }
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func SongInfoAdder(id, filename string) {
