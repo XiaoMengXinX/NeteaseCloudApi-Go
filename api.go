@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"./utils"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
 )
 
 func main() {

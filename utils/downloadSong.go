@@ -6,7 +6,7 @@ import (
 	"log"
 	"path"
 
-	"./downloader"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/downloader"
 )
 
 func DownloadSong(id string, options map[string]interface{}) (fileName []string) {

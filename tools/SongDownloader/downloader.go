@@ -3,10 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/base64"
+	"encoding/hex"
 	"encoding/json"
 	"flag"
 	"fmt"
-	"encoding/hex"
 	"io"
 	"io/ioutil"
 	"log"
@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../../utils"
-	"../../utils/crypt"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/crypt"
 	"github.com/bogem/id3v2"
 	"github.com/goulash/audio/flac"
 	"github.com/tcolgate/mp3"
@@ -198,7 +198,7 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 	//data["albumPic"] = strings.Replace(albumPic, "/", "\\/", -1)
 	data["albumPic"] = albumPic
 	data["albumPicDocId"], _ = strconv.Atoi(albumPicDocId)
-	if _, ok := result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"].(float64) ; ok {
+	if _, ok := result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"].(float64); ok {
 		data["mvId"] = int(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["mv"].(float64))
 	} else {
 		data["mvId"] = 0
@@ -226,7 +226,7 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 		AlbumPicDocId int           `json:"albumPicDocId"`
 		AlbumPic      string        `json:"albumPic"`
 		MvId          int           `json:"mvId"`
-		Flag		  int			`json:"flag"`
+		Flag          int           `json:"flag"`
 		Bitrate       int           `json:"bitrate"`
 		Duration      int           `json:"duration"`
 		Alias         []interface{} `json:"alias"`
@@ -361,12 +361,12 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string) {
 }
 
 func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string) {
-	tag, err := tag.NewFlacTagger(musicPath+filename)
+	tag, err := tag.NewFlacTagger(musicPath + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
 	tag.SetTitle(name)
-	
+
 	artists := make([]string, 0)
 	artists = append(artists, artist)
 	tag.SetArtist(artists)

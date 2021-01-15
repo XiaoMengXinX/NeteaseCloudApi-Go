@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"strings"
 
-	"./request"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/request"
 )
 
 func GetSongUrl(id string, options map[string]interface{}) (result map[string]interface{}) {

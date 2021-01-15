@@ -13,7 +13,7 @@ import (
 	"strings"
 	"time"
 
-	"../crypt"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/crypt"
 )
 
 func EapiRequest(options map[string]interface{}) (result map[string]interface{}) {

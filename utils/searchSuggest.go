@@ -3,7 +3,7 @@ package utils
 import (
 	"fmt"
 
-	"./request"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/request"
 )
 
 func GetSearchSuggest(s string, options map[string]interface{}) (result map[string]interface{}) {

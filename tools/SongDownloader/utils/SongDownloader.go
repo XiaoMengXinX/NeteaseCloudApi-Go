@@ -18,8 +18,8 @@ import (
 	"strconv"
 	"strings"
 
-	"../../../utils"
-	"../../../utils/crypt"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
+	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/crypt"
 	"github.com/bogem/id3v2"
 	"github.com/goulash/audio/flac"
 	"github.com/tcolgate/mp3"
