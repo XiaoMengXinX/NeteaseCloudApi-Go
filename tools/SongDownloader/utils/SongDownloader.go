@@ -310,11 +310,6 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 		tag.SetAlbum(album)
 	}
 
-	artwork, err := ioutil.ReadFile(picPath + picName)
-	if err != nil {
-		log.Fatal("Error while reading AlbumPic", err)
-	}
-
 	comment := id3v2.CommentFrame{
 		Encoding:    id3v2.EncodingUTF8,
 		Language:    "eng",
@@ -323,6 +318,10 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 	}
 	tag.AddCommentFrame(comment)
 
+	artwork, err := ioutil.ReadFile(picPath + picName)
+	if err != nil {
+		log.Fatal("Error while reading AlbumPic", err)
+	}
 	var mime string
 	fileCode := bytesToHexString(artwork)
 	if strings.HasPrefix(fileCode, "ffd8ffe000104a464946") {
@@ -331,7 +330,6 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 	if strings.HasPrefix(fileCode, "89504e470d0a1a0a0000") {
 		mime = "image/png"
 	}
-	//fmt.Println(mime)
 	if mime != "" {
 		pic := id3v2.PictureFrame{
 			Encoding:    id3v2.EncodingUTF8,
