@@ -8,7 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 
-  "github.com/XiaoMengXinX/NeteaseCloudApi-Go/tools/SongDownloader/utils"
+	SongDownloader "github.com/XiaoMengXinX/NeteaseCloudApi-Go/tools/SongDownloader/utils"
 	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
 	"github.com/urfave/cli/v2"
 )
