@@ -14,14 +14,12 @@ import (
 )
 
 const (
-	picPath   = "./pic/"
-	musicPath = "./temp/"
+	picPath = "./pic/"
 )
 
 func main() {
 	SongDownloader.CheckPathExists(picPath)
-	SongDownloader.CheckPathExists(musicPath)
-	var filename string
+	var file string
 
 	app := &cli.App{
 		Flags: []cli.Flag{
@@ -29,12 +27,15 @@ func main() {
 				Name:        "input",
 				Aliases:     []string{"i"},
 				Usage:       "music file name",
-				Destination: &filename,
+				Destination: &file,
 			},
 		},
 		Action: func(c *cli.Context) error {
-			var id string = strings.Replace(filepath.Base(path.Base(filename)), path.Ext(filename), "", -1)
-			SongInfoAdder(id, filename)
+			var fileName, filePath string
+			var id string = strings.Replace(filepath.Base(path.Base(file)), path.Ext(file), "", -1)
+			fileName = filepath.Base(file)
+			filePath = filepath.Dir(file)
+			SongInfoAdder(id, fileName, filePath)
 			return nil
 		},
 	}
@@ -45,10 +46,11 @@ func main() {
 	}
 }
 
-func SongInfoAdder(id, filename string) {
+func SongInfoAdder(id, fileName, filePath string) {
 	var options map[string]interface{}
 	options = make(map[string]interface{})
-	options["savePath"] = "./"
+	options["savePath"] = filePath
+	options["picPath"] = picPath
 	result := utils.GetSongDetail(id, options)
 
 	if len(result["body"].(map[string]interface{})["songs"].([]interface{})) > 0 {
@@ -57,16 +59,16 @@ func SongInfoAdder(id, filename string) {
 			artist, artistMap := SongDownloader.ParseArtist(id, i, result)
 			name := SongDownloader.ParseName(id, i, result)
 			album, albumId, albumPic, albumPicDocId := SongDownloader.ParseAlbum(id, i, result)
-			musicMarker := SongDownloader.MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
+			musicMarker := SongDownloader.MusicMarker(id, fileName, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
 			//fmt.Println(marker)
-			picName := SongDownloader.DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result)
+			picName := SongDownloader.DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result, options)
 
-			format := strings.Replace(path.Ext(filename), ".", "", -1)
+			format := strings.Replace(path.Ext(fileName), ".", "", -1)
 			switch format {
 			case "mp3":
-				SongDownloader.AddMp3Id3v2(filename, name, artist, album, picName, musicMarker)
+				SongDownloader.AddMp3Id3v2(fileName, name, artist, album, picName, musicMarker, options)
 			case "flac":
-				SongDownloader.AddFlacId3v2(filename, name, artist, album, picName, musicMarker)
+				SongDownloader.AddFlacId3v2(fileName, name, artist, album, picName, musicMarker, options)
 			}
 		}
 	}

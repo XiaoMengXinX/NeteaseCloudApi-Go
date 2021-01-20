@@ -20,12 +20,12 @@ func main() {
 	//options["limit"] = 2
 	//options["resultType"] = "json"
 	//result := utils.DownloadSong(arg, options)
-	//utils.DownloadPlaylist(arg, options)
-	result := utils.GetSongDetail(arg, options)
+	utils.DownloadSong(arg, options)
+	//result := utils.GetSongDetail(arg, options)
 	//status := result["status"].(int)
-	data := result["body"]
+	//data := result["body"]
 	//data := result["body"].(map[string]interface{})["songs"].([]interface{})[0].(map[string]interface{})["al"].(map[string]interface{})["picUrl"]
-	fmt.Printf("%s\n", data)
+	//fmt.Printf("%s\n", data)
 
 	//fmt.Printf("%d\n", status)
 

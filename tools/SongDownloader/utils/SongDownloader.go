@@ -81,7 +81,7 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 				newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
 			}
 			if fileNameStyle != 0 {
-				err := os.Rename(musicPath+filename, musicPath+newFilename)
+				err := os.Rename(musicPath+"/"+filename, musicPath+"/"+newFilename)
 				fmt.Println(fmt.Sprintf("%v - %v", artist, name))
 				if err != nil {
 					log.Fatal(err)
@@ -147,7 +147,7 @@ func DownloadPic(id string, i int, result, options map[string]interface{}) (picN
 		log.Fatal(err)
 	}
 	defer resp.Body.Close()
-	out, err := os.Create(picPath + picName)
+	out, err := os.Create(picPath + "/" + picName)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -253,7 +253,7 @@ func ParseAlbum(id string, i int, result map[string]interface{}) (album, albumId
 
 func GetMp3Info(filename string, options map[string]interface{}) (bitRate, duration int) {
 	t := 0.0
-	r, err := os.Open(options["savePath"].(string) + filename)
+	r, err := os.Open(options["savePath"].(string) + "/" + filename)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -282,8 +282,8 @@ func GetMp3Info(filename string, options map[string]interface{}) (bitRate, durat
 }
 
 func GetFlacInfo(filename string, options map[string]interface{}) (bitRate, duration int) {
-	file, _ := os.Stat(options["savePath"].(string) + filename)
-	data, _ := flac.ReadFileMetadata(options["savePath"].(string) + filename)
+	file, _ := os.Stat(options["savePath"].(string) + "/" + filename)
+	data, _ := flac.ReadFileMetadata(options["savePath"].(string) + "/" + filename)
 	length := data.Length()
 	duration = int(length / 1000000)
 	bitRate = (int(file.Size()) * 8) / (duration / 1000)
@@ -299,7 +299,7 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 		picPath = options["picPath"].(string)
 	}
 
-	tag, _ := id3v2.Open(musicPath+filename, id3v2.Options{Parse: false})
+	tag, _ := id3v2.Open(musicPath+"/"+filename, id3v2.Options{Parse: false})
 	defer tag.Close()
 
 	tag.SetDefaultEncoding(id3v2.EncodingUTF8)
@@ -318,7 +318,7 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 	}
 	tag.AddCommentFrame(comment)
 
-	artwork, err := ioutil.ReadFile(picPath + picName)
+	artwork, err := ioutil.ReadFile(picPath + "/" + picName)
 	if err != nil {
 		log.Fatal("Error while reading AlbumPic", err)
 	}
@@ -354,7 +354,7 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string, op
 		picPath = options["picPath"].(string)
 	}
 
-	tag, err := tag.NewFlacTagger(musicPath + filename)
+	tag, err := tag.NewFlacTagger(musicPath + "/" + filename)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -368,7 +368,7 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string, op
 		tag.SetAlbum(album)
 	}
 
-	artwork, err := ioutil.ReadFile(picPath + picName)
+	artwork, err := ioutil.ReadFile(picPath + "/" + picName)
 
 	var mime string
 	fileCode := bytesToHexString(artwork)
