@@ -28,7 +28,7 @@ func GetSearchSuggest(s string, options map[string]interface{}) (result map[stri
 	if lastKeyword != "" {
 		lastKeywordForm = fmt.Sprintf("\"lastKeyword\":\"%v\",", lastKeyword)
 	}
-	options["str"] = fmt.Sprintf("{\"lastTime\":\"%v\",\"s\":\"%v\",\"type\":\"%v\",%v\"limit\":\"%v\",\"header\":\"{}\",\"e_r\":\"true\"}", lastTime, s, Type, lastKeywordForm, limit)
+	options["str"] = fmt.Sprintf("{\"lastTime\":\"%v\",\"s\":%q,\"type\":\"%v\",%v\"limit\":\"%v\",\"header\":\"{}\",\"e_r\":\"true\"}", lastTime, s, Type, lastKeywordForm, limit)
 	result = request.EapiRequest(options)
 	return result
 }
