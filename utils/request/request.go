@@ -21,13 +21,17 @@ func EapiRequest(options map[string]interface{}) (result map[string]interface{})
 	answer := CreateNewRequest(Format2Params(data), options["url"].(string), options)
 	result = map[string]interface{}{
 		"status": 500,
-		"body": map[string]interface{}{},
+		"body":   map[string]interface{}{},
 	}
 	if answer["status"].(int) == 200 {
-		decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
+		var decrypted []byte
+		if options["decrypt"] != 0 {
+			decrypted = crypt.AesDecryptECB(answer["body"].([]byte))
+		} else {
+			decrypted = answer["body"].([]byte)
+		}
 		if _, ok := options["resultType"]; ok {
 			if options["resultType"] == "json" {
-				decrypted := crypt.AesDecryptECB(answer["body"].([]byte))
 				result["status"] = answer["status"].(int)
 				result["body"] = string(decrypted)
 			} else {
@@ -39,7 +43,7 @@ func EapiRequest(options map[string]interface{}) (result map[string]interface{})
 					} else {
 						result["status"] = answer["status"].(int)
 					}
-			}
+				}
 			}
 		} else {
 			bodyJson := map[string]interface{}{}

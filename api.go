@@ -23,19 +23,20 @@ func main() {
 	//result := utils.DownloadSong(arg, options)
 	//utils.DownloadSong(arg, options)
 	//result := utils.GetSongDetail(arg, options)
-	result := utils.SearchSong(arg, options)
-	status := result["status"].(int)
+	result := utils.GetMlogComments(arg, options)
+	//status := result["status"].(int)
 	data := result["body"]
 	//data := result["body"].(map[string]interface{})["songs"].([]interface{})[0].(map[string]interface{})["al"].(map[string]interface{})["picUrl"]
 	data, _ = json.Marshal(data)
 	fmt.Printf("%s\n", data)
 
-	fmt.Printf("%d\n", status)
-
-	//for _, v := range result["body"].(map[string]interface{})["data"].([]interface{}) {
-	//fmt.Println(v.(map[string]interface{})["url"])
-	//fmt.Println(int(v.(map[string]interface{})["id"].(float64)))
-	//}
+	//fmt.Printf("%d\n", status)
+	var i int = 0
+	for _, v := range result["body"].(map[string]interface{})["data"].(map[string]interface{})["comments"].([]interface{}) {
+		i++
+		fmt.Println(i, v.(map[string]interface{})["content"], "\n")
+		//fmt.Println(int(v.(map[string]interface{})["id"].(float64)))
+	}
 
 	//walk(result["body"])
 }
