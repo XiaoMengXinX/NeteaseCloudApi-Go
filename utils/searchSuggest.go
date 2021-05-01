@@ -9,6 +9,11 @@ import (
 func GetSearchSuggest(s string, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/search/suggest/keyword"
 	options["url"] = "https://music.163.com/eapi/search/suggest/keyword"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://music.163.com/eapi/search/suggest/keyword"
+		}
+	}
 	var lastKeyword, lastKeywordForm string
 	lastTime := 0
 	Type := 1018

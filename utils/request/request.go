@@ -2,6 +2,7 @@ package request
 
 import (
 	"crypto/md5"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -97,13 +98,24 @@ func encodeURIComponent(str string) string {
 }
 
 func CreateNewRequest(data string, url string, options map[string]interface{}) map[string]interface{} {
-
 	answer := map[string]interface{}{
 		"status": 500,
 		"body":   "string",
 	}
-
 	client := &http.Client{}
+	if _, ok := options["proxy"].(string); ok {
+		proxyAddr := options["proxy"].(string)
+		proxy, err := netUrl.Parse(proxyAddr)
+		if err != nil {
+			return nil
+		}
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+			Proxy:           http.ProxyURL(proxy),
+		}
+		client = &http.Client{Transport: tr}
+	}
+	//client := &http.Client{}
 	reqBody := strings.NewReader(data)
 	req, err := http.NewRequest("POST", url, reqBody)
 	if err != nil {

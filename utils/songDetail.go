@@ -10,6 +10,11 @@ import (
 func GetSongDetail(id string, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/v3/song/detail"
 	options["url"] = "https://music.163.com/eapi/v3/song/detail"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://music.163.com/eapi/v3/song/detail"
+		}
+	}
 	ids := strings.Split(id, ",")
 	var data string
 	if len(ids) > 0 {

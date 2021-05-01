@@ -2,6 +2,7 @@ package songdownloader
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
@@ -138,6 +139,13 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 }
 
 func DownloadPic(id string, i int, result, options map[string]interface{}) (picName string) {
+	client := &http.Client{}
+	if _, ok := options["proxy"].(string); ok {
+		tr := &http.Transport{
+			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+		}
+		client = &http.Client{Transport: tr}
+	}
 	picName = id + ".jpg"
 	if _, ok := options["savePath"].(string); ok {
 		musicPath = options["savePath"].(string)
@@ -146,7 +154,7 @@ func DownloadPic(id string, i int, result, options map[string]interface{}) (picN
 		picPath = options["picPath"].(string)
 	}
 	picurl := fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["al"].(map[string]interface{})["picUrl"])
-	resp, err := http.Get(picurl)
+	resp, err := client.Get(picurl)
 	if err != nil {
 		log.Error(err)
 	}

@@ -66,10 +66,17 @@ func main() {
 	var playlistid = flag.String("p", "", "歌单id")
 	var playlistoffset = flag.Int("s", 0, "歌单偏移量")
 	var loglevel = flag.Int("l", 4, "日志等级")
+	var proxy = flag.String("proxy", "", "代理设置")
 	var encrypted = flag.String("enc", "", "Only for debug")
 
-	*playlistid = "6736706492"
 	flag.Parse()
+
+	if *proxy != "" {
+		os.Setenv("HTTP_PROXY", *proxy)
+		//os.Setenv("HTTPS_PROXY", *proxy)
+		options["proxy"] = *proxy
+		options["disable_https"] = true
+	}
 	if *loglevel != 4 {
 		switch {
 		case *loglevel == 0:
@@ -103,5 +110,4 @@ func main() {
 	if *encrypted != "" {
 		fmt.Println(SongDownloader.Decrypt163key(*encrypted))
 	}
-
 }

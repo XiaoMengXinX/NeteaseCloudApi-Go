@@ -10,6 +10,11 @@ import (
 func GetSongUrl(id string, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/song/enhance/player/url/v1"
 	options["url"] = "https://music.163.com/eapi/song/enhance/player/url/v1"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://music.163.com/eapi/song/enhance/player/url/v1"
+		}
+	}
 	encodeType := "mp3"
 	level := "lossless"
 	if _, ok := options["encodeType"].(string); ok {

@@ -9,6 +9,11 @@ import (
 func GetComments(id string, commentType int, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/v2/resource/comments"
 	options["url"] = "https://music.163.com/eapi/v2/resource/comments"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://music.163.com/eapi/v2/resource/comments"
+		}
+	}
 	var cursor, pageNo, pageSize, sortType int = 0, 1, 20, 0
 	var resourceType string
 	if _, ok := options["cursor"].(int); ok {

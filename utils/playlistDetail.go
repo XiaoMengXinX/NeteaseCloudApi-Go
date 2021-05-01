@@ -9,6 +9,11 @@ import (
 func GetPlaylistDetail(id string, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/v6/playlist/detail"
 	options["url"] = "https://interface3.music.163.com/eapi/v6/playlist/detail"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://interface3.music.163.com/eapi/v6/playlist/detail"
+		}
+	}
 	s := 8
 	n := 500
 	if _, ok := options["n"].(int); ok {

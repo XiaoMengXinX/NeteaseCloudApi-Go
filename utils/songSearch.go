@@ -9,6 +9,11 @@ import (
 func SearchSong(keywords string, options map[string]interface{}) (result map[string]interface{}) {
 	options["path"] = "/api/v1/search/song/get"
 	options["url"] = "https://music.163.com/eapi/v1/search/song/get"
+	if _, ok := options["disable_https"].(bool); ok {
+		if options["disable_https"].(bool) {
+			options["url"] = "http://music.163.com/eapi/v1/search/song/get"
+		}
+	}
 	limit := 10
 	offset := 0
 	if _, ok := options["limit"].(int); ok {
