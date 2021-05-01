@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"io"
 	"io/ioutil"
-	"log"
 	"math"
 	"net/http"
 	"os"
@@ -16,19 +15,22 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
 	"github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils/crypt"
 	"github.com/bogem/id3v2"
 	"github.com/goulash/audio/flac"
+	log "github.com/sirupsen/logrus"
 	"github.com/tcolgate/mp3"
 	"github.com/yoki123/ncmdump/tag"
 )
 
-var musicPath, picPath string = "./pic/", "./music/"
+var musicPath, picPath string = "./pic", "./music"
 var fileNameStyle int = 1
 
 func DownloadSongWithMetadata(id string, options map[string]interface{}) {
+	startTime := time.Now()
 	result := utils.GetSongDetail(id, options)
 	fileName := utils.DownloadSong(id, options)
 	if _, ok := options["savePath"].(string); ok {
@@ -63,13 +65,15 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			case "flac":
 				AddFlacId3v2(filename, name, artist, album, picName, musicMarker, options)
 			}
+			optionsJson, _ := json.Marshal(options)
+			log.Debugf("\n\tfilename: %v\n\tname: %v\n\tartist: %v\n\talbum: %v\n\tpicName: %v\n\tmusicMarker: %v\n\toptions: %v", filename, name, artist, album, picName, musicMarker, string(optionsJson))
 
 			//var replacer = strings.NewReplacer("/", " ")
 			//sysType := runtime.GOOS
 			//if sysType == "windows" {
-			//	replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
+			//var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
 			//}
-			var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
+			var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ", "\"", " ")
 
 			var newFilename string
 			switch fileNameStyle {
@@ -82,9 +86,9 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 			}
 			if fileNameStyle != 0 {
 				err := os.Rename(musicPath+"/"+filename, musicPath+"/"+newFilename)
-				fmt.Println(fmt.Sprintf("%v - %v", artist, name))
+				log.Printf("%s 下载完成 耗时: %f second\n", fmt.Sprintf("%v - %v", artist, name), time.Now().Sub(startTime).Seconds())
 				if err != nil {
-					log.Fatal(err)
+					log.Error(err)
 				}
 			}
 		}
@@ -97,8 +101,8 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 		if _, ok := options["s"].(int); ok {
 			var mid string
 			var i int = 0
-			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
-				if t > offset {
+			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}) {
+				if t >= offset {
 					if i < options["s"].(int) {
 						if _, ok := v.(map[string]interface{})["id"].(float64); ok {
 							if i == 0 {
@@ -110,7 +114,7 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 								i = 0
 								DownloadSongWithMetadata(mid, options)
 							} else {
-								if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}))-t == 1 {
+								if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}))-t == 1 {
 									DownloadSongWithMetadata(mid, options)
 								} else {
 									i++
@@ -121,8 +125,8 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 				}
 			}
 		} else {
-			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["tracks"].([]interface{}) {
-				if t > offset {
+			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}) {
+				if t >= offset {
 					var mid string
 					mid = fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64)))
 					//fmt.Println(mid)
@@ -144,17 +148,17 @@ func DownloadPic(id string, i int, result, options map[string]interface{}) (picN
 	picurl := fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["al"].(map[string]interface{})["picUrl"])
 	resp, err := http.Get(picurl)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	defer resp.Body.Close()
 	out, err := os.Create(picPath + "/" + picName)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	defer out.Close()
 	_, err = io.Copy(out, resp.Body)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	return picName
 }
@@ -255,7 +259,7 @@ func GetMp3Info(filename string, options map[string]interface{}) (bitRate, durat
 	t := 0.0
 	r, err := os.Open(options["savePath"].(string) + "/" + filename)
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 		return
 	}
 	d := mp3.NewDecoder(r)
@@ -266,7 +270,7 @@ func GetMp3Info(filename string, options map[string]interface{}) (bitRate, durat
 			if err == io.EOF {
 				break
 			}
-			fmt.Println(err)
+			log.Error(err)
 			return
 		}
 		t = t + f.Duration().Seconds()
@@ -275,7 +279,7 @@ func GetMp3Info(filename string, options map[string]interface{}) (bitRate, durat
 	duration = int(math.Floor(t * 1000))
 	err = r.Close()
 	if err != nil {
-		fmt.Println(err)
+		log.Error(err)
 	}
 
 	return bitRate, duration
@@ -320,7 +324,7 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 
 	artwork, err := ioutil.ReadFile(picPath + "/" + picName)
 	if err != nil {
-		log.Fatal("Error while reading AlbumPic", err)
+		log.Error("Error while reading AlbumPic", err)
 	}
 	var mime string
 	fileCode := bytesToHexString(artwork)
@@ -342,7 +346,7 @@ func AddMp3Id3v2(filename, name, artist, album, picName, MusicMarker string, opt
 	}
 
 	if err = tag.Save(); err != nil {
-		log.Fatal("Error: ", err)
+		log.Error("Error: ", err)
 	}
 }
 
@@ -356,7 +360,7 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string, op
 
 	tag, err := tag.NewFlacTagger(musicPath + "/" + filename)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	tag.SetTitle(name)
 
@@ -382,14 +386,14 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string, op
 	if mime != "" {
 		err = tag.SetCover(artwork, mime)
 		if err != nil {
-			log.Fatal(err)
+			log.Error(err)
 		}
 	}
 
 	tag.SetComment(MusicMarker)
 	err = tag.Save()
 	if err != nil {
-		log.Fatal("Error: ", err)
+		log.Error("Error: ", err)
 	}
 }
 
@@ -401,11 +405,11 @@ func CheckPathExists(path string) bool {
 	if os.IsNotExist(err) {
 		err := os.Mkdir(path, os.ModePerm)
 		if err != nil {
-			fmt.Printf("mkdir %v failed: %v\n", path, err)
+			log.Errorf("mkdir %v failed: %v\n", path, err)
 		}
 		return false
 	}
-	fmt.Printf("Error: %v\n", err)
+	log.Errorf("Error: %v\n", err)
 	return false
 }
 

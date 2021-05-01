@@ -6,14 +6,14 @@ import (
 	"errors"
 	"fmt"
 	"io/ioutil"
-	"log"
 	"mime"
 	"net/http"
 	"os"
 	"path/filepath"
 	"strconv"
 	"sync"
-	
+
+	log "github.com/sirupsen/logrus"
 	//"time"
 )
 
@@ -81,7 +81,7 @@ func (d *FileDownloader) Run() error {
 		return err
 	}
 	d.fileSize = fileTotalSize
-	
+
 	log.Printf("开始下载: %v 线程数: %v", d.outputFileName, d.totalPart)
 
 	jobs := make([]filePart, d.totalPart)
@@ -139,7 +139,7 @@ func (d *FileDownloader) getHeaderInfo() (int, error) {
 	// 检查是否支持断点续传
 	// https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Accept-Ranges
 	//if resp.Header.Get("Accept-Ranges") != "bytes" {
-		//return 0, errors.New("服务器不支持文件断点续传")
+	//return 0, errors.New("服务器不支持文件断点续传")
 	//}
 
 	// 支持文件断点续传时，获取文件大小，名称等信息
@@ -193,7 +193,7 @@ func (d *FileDownloader) downloadPart(c filePart) error {
 func (d *FileDownloader) mergeFileParts() error {
 	path := filepath.Join(d.outputDir, d.outputFileName)
 
-	log.Println("开始合并文件")
+	//log.Println("开始合并文件")
 	mergedFile, err := os.Create(path)
 	if err != nil {
 		return err
