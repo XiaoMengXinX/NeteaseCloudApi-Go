@@ -67,6 +67,7 @@ func main() {
 	var playlistoffset = flag.Int("s", 0, "歌单偏移量")
 	var loglevel = flag.Int("l", 4, "日志等级")
 	var threads = flag.Int("t", 4, "下载线程数")
+	var concurrency = flag.Int("c", 1, "并发量")
 	var proxy = flag.String("proxy", "", "代理设置")
 	//var encrypted = flag.String("enc", "", "Only for debug")
 
@@ -81,6 +82,9 @@ func main() {
 	if *threads != 4 {
 		//os.Setenv("HTTPS_PROXY", *proxy)
 		options["threads"] = *threads
+	}
+	if *concurrency != 1 {
+		options["s"] = *concurrency
 	}
 	if *loglevel != 4 {
 		switch {
@@ -101,7 +105,9 @@ func main() {
 		}
 	}
 	if *musicid != "" {
-		SongDownloader.DownloadSongWithMetadata(*musicid, options)
+		var ids []string
+		ids= append(ids, *musicid)
+		SongDownloader.DownloadSongWithMetadata(ids, options)
 	}
 	if *playlistid != "" {
 		if *playlistoffset != 0 {

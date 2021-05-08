@@ -30,66 +30,69 @@ import (
 var musicPath, picPath string = "./pic", "./music"
 var fileNameStyle int = 1
 
-func DownloadSongWithMetadata(id string, options map[string]interface{}) {
+func DownloadSongWithMetadata(ids []string, options map[string]interface{}) {
 	startTime := time.Now()
-	result := utils.GetSongDetail(id, options)
-	fileName := utils.DownloadSong(id, options)
-	if _, ok := options["savePath"].(string); ok {
-		musicPath = options["savePath"].(string)
-	}
-	if _, ok := options["picPath"].(string); ok {
-		picPath = options["picPath"].(string)
-	}
-	if _, ok := options["fileNameStyle"].(int); ok {
-		fileNameStyle = options["fileNameStyle"].(int)
-	}
+	fileName, validIds := utils.MultiDownloadSong(ids, options)
+	for m := 0; m < len(validIds); m++ {
+		id := string(validIds[m])
+		result := utils.GetSongDetail(id, options)
+		if _, ok := options["savePath"].(string); ok {
+			musicPath = options["savePath"].(string)
+		}
+		if _, ok := options["picPath"].(string); ok {
+			picPath = options["picPath"].(string)
+		}
+		if _, ok := options["fileNameStyle"].(int); ok {
+			fileNameStyle = options["fileNameStyle"].(int)
+		}
 
-	if len(result["body"].(map[string]interface{})["songs"].([]interface{})) > 0 {
-		for i := 0; i < len(result["body"].(map[string]interface{})["songs"].([]interface{})); i++ {
-			artist, artistMap := ParseArtist(id, i, result)
-			name := ParseName(id, i, result)
-			album, albumId, albumPic, albumPicDocId := ParseAlbum(id, i, result)
-			//fmt.Println(artistMap)
-			//fmt.Println(name, artist, album)
-			filename := fileName[i]
-			if filename == "null" {
-				continue
-			}
-			musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
-			//fmt.Println(musicMarker)
-			picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result, options)
+		if len(result["body"].(map[string]interface{})["songs"].([]interface{})) > 0 {
+			for i := 0; i < len(result["body"].(map[string]interface{})["songs"].([]interface{})); i++ {
+				artist, artistMap := ParseArtist(id, i, result)
+				name := ParseName(id, i, result)
+				album, albumId, albumPic, albumPicDocId := ParseAlbum(id, i, result)
+				//fmt.Println(artistMap)
+				//fmt.Println(name, artist, album)
+				filename := fileName[m]
+				if filename == "null" {
+					continue
+				}
+				musicMarker := MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId, i, options, result, artistMap)
+				//fmt.Println(musicMarker)
+				picName := DownloadPic(fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[i].(map[string]interface{})["id"].(float64))), i, result, options)
 
-			format := strings.Replace(path.Ext(filename), ".", "", -1)
-			switch format {
-			case "mp3":
-				AddMp3Id3v2(filename, name, artist, album, picName, musicMarker, options)
-			case "flac":
-				AddFlacId3v2(filename, name, artist, album, picName, musicMarker, options)
-			}
-			optionsJson, _ := json.Marshal(options)
-			log.Debugf("\n\tfilename: %v\n\tname: %v\n\tartist: %v\n\talbum: %v\n\tpicName: %v\n\tmusicMarker: %v\n\toptions: %v", filename, name, artist, album, picName, musicMarker, string(optionsJson))
+				format := strings.Replace(path.Ext(filename), ".", "", -1)
+				switch format {
+				case "mp3":
+					AddMp3Id3v2(filename, name, artist, album, picName, musicMarker, options)
+				case "flac":
+					AddFlacId3v2(filename, name, artist, album, picName, musicMarker, options)
+				}
+				optionsJson, _ := json.Marshal(options)
+				log.Debugf("\n\tfilename: %v\n\tname: %v\n\tartist: %v\n\talbum: %v\n\tpicName: %v\n\tmusicMarker: %v\n\toptions: %v", filename, name, artist, album, picName, musicMarker, string(optionsJson))
 
-			//var replacer = strings.NewReplacer("/", " ")
-			//sysType := runtime.GOOS
-			//if sysType == "windows" {
-			//var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
-			//}
-			var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ", "\"", " ")
+				//var replacer = strings.NewReplacer("/", " ")
+				//sysType := runtime.GOOS
+				//if sysType == "windows" {
+				//var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ")
+				//}
+				var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ", "\"", " ")
 
-			var newFilename string
-			switch fileNameStyle {
-			case 1:
-				newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), name, path.Ext(filename)))
-			case 2:
-				newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", name, strings.Replace(artist, "/", ",", -1), path.Ext(filename)))
-			case 3:
-				newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
-			}
-			if fileNameStyle != 0 {
-				err := os.Rename(musicPath+"/"+filename, musicPath+"/"+newFilename)
-				log.Printf("%s 下载完成 耗时: %f second\n", fmt.Sprintf("%v - %v", artist, name), time.Now().Sub(startTime).Seconds())
-				if err != nil {
-					log.Error(err)
+				var newFilename string
+				switch fileNameStyle {
+				case 1:
+					newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), name, path.Ext(filename)))
+				case 2:
+					newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", name, strings.Replace(artist, "/", ",", -1), path.Ext(filename)))
+				case 3:
+					newFilename = replacer.Replace(fmt.Sprintf("%v%v", strings.Replace(name, "/", " ", -1), path.Ext(filename)))
+				}
+				if fileNameStyle != 0 {
+					err := os.Rename(musicPath+"/"+filename, musicPath+"/"+newFilename)
+					log.Printf("%s 下载完成 耗时: %f second\n", fmt.Sprintf("%v - %v", artist, name), time.Now().Sub(startTime).Seconds())
+					if err != nil {
+						log.Error(err)
+					}
 				}
 			}
 		}
@@ -99,24 +102,22 @@ func DownloadSongWithMetadata(id string, options map[string]interface{}) {
 func DownloadPLaylistWithMetadata(id string, offset int, options map[string]interface{}) {
 	result := utils.GetPlaylistDetail(id, options)
 	if _, ok := result["body"].(map[string]interface{})["playlist"]; ok {
+		var ids []string
 		if _, ok := options["s"].(int); ok {
-			var mid string
 			var i int = 0
 			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}) {
 				if t >= offset {
 					if i < options["s"].(int) {
 						if _, ok := v.(map[string]interface{})["id"].(float64); ok {
-							if i == 0 {
-								mid = fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64)))
-							} else {
-								mid = fmt.Sprintf("%v,%v", mid, int(v.(map[string]interface{})["id"].(float64)))
-							}
+							ids = append(ids, fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64))))
 							if i == options["s"].(int)-1 {
 								i = 0
-								DownloadSongWithMetadata(mid, options)
+								DownloadSongWithMetadata(ids, options)
+								ids = ids[0:0]
 							} else {
 								if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}))-t == 1 {
-									DownloadSongWithMetadata(mid, options)
+									DownloadSongWithMetadata(ids, options)
+									ids = ids[0:0]
 								} else {
 									i++
 								}
@@ -128,10 +129,10 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 		} else {
 			for t, v := range result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}) {
 				if t >= offset {
-					var mid string
-					mid = fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64)))
+					ids = append(ids, fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64))))
 					//fmt.Println(mid)
-					DownloadSongWithMetadata(mid, options)
+					DownloadSongWithMetadata(ids, options)
+					ids = ids[0:0]
 				}
 			}
 		}
