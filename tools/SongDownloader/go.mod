@@ -10,7 +10,6 @@ require (
 	github.com/goulash/audio v1.0.0
 	github.com/sirupsen/logrus v1.8.1
 	github.com/tcolgate/mp3 v0.0.0-20170426193717-e79c5a46d300
-	github.com/vbauerster/mpb/v5 v5.4.0 // indirect
 	github.com/yoki123/ncmdump v0.3.6
 	golang.org/x/sys v0.0.0-20210426230700-d19ff857e887 // indirect
 )

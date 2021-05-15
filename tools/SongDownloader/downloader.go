@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	"flag"
 	"fmt"
 	"io"
@@ -9,6 +10,7 @@ import (
 	"time"
 
 	SongDownloader "github.com/XiaoMengXinX/NeteaseCloudApi-Go/tools/SongDownloader/utils"
+	utils "github.com/XiaoMengXinX/NeteaseCloudApi-Go/utils"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -51,7 +53,33 @@ func main() {
 	var options, cookies map[string]interface{}
 	options = make(map[string]interface{})
 	cookies = make(map[string]interface{})
-	cookies["MUSIC_U"] = "aa31a213cb2dff5ba39ff7623ef3308ba14dd75bdf4434e22f9ccddbcf6aa43f33a649814e309366"
+	if !utils.FileExists("./config.ini") {
+		var input string
+		log.Println("配置文件不存在，是否重新配置token？[y/n]")
+		fmt.Scanln(&input)
+		if input == "Y" || input == "y" {
+			log.Println("请输入你的 MUSIC_U 并回车")
+			fmt.Scanln(&input)
+			if input != "" {
+				file, err := os.OpenFile("./config.ini", os.O_WRONLY|os.O_CREATE, 0666)
+				if err != nil {
+					log.Fatal("文件创建失败", err)
+				}
+				writeConfig := func() {
+					defer file.Close()
+					write := bufio.NewWriter(file)
+					write.WriteString("MUSIC_U=" + input)
+					write.Flush()
+				}
+				writeConfig()
+			}
+		}
+	}
+	config, err := utils.ReadConfig("./config.ini")
+	if err != nil {
+		log.Fatal(err)
+	}
+	cookies["MUSIC_U"] = config["MUSIC_U"]
 	options["cookie"] = cookies
 	//options["s"] = 5
 
@@ -106,7 +134,7 @@ func main() {
 	}
 	if *musicid != "" {
 		var ids []string
-		ids= append(ids, *musicid)
+		ids = append(ids, *musicid)
 		SongDownloader.DownloadSongWithMetadata(ids, options)
 	}
 	if *playlistid != "" {
