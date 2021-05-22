@@ -30,12 +30,37 @@ import (
 var musicPath, picPath string = "./pic", "./music"
 var fileNameStyle int = 1
 
-func DownloadSongWithMetadata(ids []string, options map[string]interface{}) {
+func DownloadSongWithMetadata(ids []string, resultCache, options map[string]interface{}) error {
 	startTime := time.Now()
-	fileName, validIds := utils.MultiDownloadSong(ids, options)
+	var fileName, validIds []string
+	if len(ids) == 1 && resultCache["SongUrl"] != nil {
+		if _, ok := resultCache["SongUrl"].(map[string]interface{}); ok {
+			if resultCache["SongUrl"].(map[string]interface{})["body"].(map[string]interface{})["data"].([]interface{})[0].(map[string]interface{})["url"] != nil {
+				fileName = utils.DownloadSong(ids[0], resultCache, options)
+				validIds = []string{ids[0]}
+			} else {
+				return fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
+			}
+		} else {
+			return fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
+		}
+	} else {
+		fileName, validIds = utils.MultiDownloadSong(ids, options)
+	}
+
 	for m := 0; m < len(validIds); m++ {
 		id := string(validIds[m])
-		result := utils.GetSongDetail(id, options)
+		var result map[string]interface{}
+		if len(ids) == 1 && resultCache["SongDetail"] != nil {
+			if _, ok := resultCache["SongDetail"].(map[string]interface{}); ok {
+				result = resultCache["SongDetail"].(map[string]interface{})
+			} else {
+				result = utils.GetSongDetail(id, options)
+			}
+		} else {
+			result = utils.GetSongDetail(id, options)
+		}
+
 		if _, ok := options["savePath"].(string); ok {
 			musicPath = options["savePath"].(string)
 		}
@@ -48,7 +73,7 @@ func DownloadSongWithMetadata(ids []string, options map[string]interface{}) {
 
 		if len(result["body"].(map[string]interface{})["songs"].([]interface{})) > 0 {
 			for i := 0; i < len(result["body"].(map[string]interface{})["songs"].([]interface{})); i++ {
-				artist, artistMap := ParseArtist(id, i, result)
+				artist, artistMap := ParseArtist(i, result)
 				name := ParseName(id, i, result)
 				album, albumId, albumPic, albumPicDocId := ParseAlbum(id, i, result)
 				//fmt.Println(artistMap)
@@ -89,7 +114,7 @@ func DownloadSongWithMetadata(ids []string, options map[string]interface{}) {
 				}
 				if fileNameStyle != 0 {
 					err := os.Rename(musicPath+"/"+filename, musicPath+"/"+newFilename)
-					log.Printf("%s 下载完成 耗时: %f second\n", fmt.Sprintf("%v - %v", artist, name), time.Now().Sub(startTime).Seconds())
+					log.Printf("%s 下载完成 耗时: %f second\n", fmt.Sprintf("%v - %v", artist, name), time.Since(startTime).Seconds())
 					if err != nil {
 						log.Error(err)
 					}
@@ -97,6 +122,7 @@ func DownloadSongWithMetadata(ids []string, options map[string]interface{}) {
 			}
 		}
 	}
+	return nil
 }
 
 func DownloadPLaylistWithMetadata(id string, offset int, options map[string]interface{}) {
@@ -112,11 +138,11 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 							ids = append(ids, fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64))))
 							if i == options["s"].(int)-1 {
 								i = 0
-								DownloadSongWithMetadata(ids, options)
+								DownloadSongWithMetadata(ids, make(map[string]interface{}), options)
 								ids = ids[0:0]
 							} else {
 								if len(result["body"].(map[string]interface{})["playlist"].(map[string]interface{})["trackIds"].([]interface{}))-t == 1 {
-									DownloadSongWithMetadata(ids, options)
+									DownloadSongWithMetadata(ids, make(map[string]interface{}), options)
 									ids = ids[0:0]
 								} else {
 									i++
@@ -131,7 +157,7 @@ func DownloadPLaylistWithMetadata(id string, offset int, options map[string]inte
 				if t >= offset {
 					ids = append(ids, fmt.Sprintf("%v", int(v.(map[string]interface{})["id"].(float64))))
 					//fmt.Println(mid)
-					DownloadSongWithMetadata(ids, options)
+					DownloadSongWithMetadata(ids, make(map[string]interface{}), options)
 					ids = ids[0:0]
 				}
 			}
@@ -173,8 +199,7 @@ func DownloadPic(id string, i int, result, options map[string]interface{}) (picN
 }
 
 func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId string, s int, options, result, artistMap map[string]interface{}) (marker string) {
-	var data map[string]interface{}
-	data = make(map[string]interface{})
+	var data map[string]interface{} = make(map[string]interface{})
 	format := path.Ext(filename)
 	data["format"] = strings.Replace(format, ".", "", -1)
 	data["musicId"], _ = strconv.Atoi(id)
@@ -230,9 +255,10 @@ func MusicMarker(id, filename, name, album, albumId, albumPic, albumPicDocId str
 	return marker
 }
 
-func ParseArtist(id string, s int, result map[string]interface{}) (artist string, artistMap map[string]interface{}) {
+func ParseArtist(s int, result map[string]interface{}) (artist string, artistMap map[string]interface{}) {
 	if _, ok := result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{}); ok {
 		if len(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})) > 0 {
+			var id string
 			artist = fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[0].(map[string]interface{})["name"])
 			id = fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[0].(map[string]interface{})["id"].(float64)))
 			var ar string
@@ -240,8 +266,7 @@ func ParseArtist(id string, s int, result map[string]interface{}) (artist string
 			for i := 1; i < len(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})); i++ {
 				artist = fmt.Sprintf("%v/%v", artist, result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[i].(map[string]interface{})["name"])
 				id = fmt.Sprintf("%v", int(result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[i].(map[string]interface{})["id"].(float64)))
-				var Artist string
-				Artist = fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[i].(map[string]interface{})["name"])
+				var Artist string = fmt.Sprintf("%v", result["body"].(map[string]interface{})["songs"].([]interface{})[s].(map[string]interface{})["ar"].([]interface{})[i].(map[string]interface{})["name"])
 				ar = fmt.Sprintf("%v,[\"%v\",%v]", ar, Artist, id)
 			}
 			jsonStr := []byte(fmt.Sprintf("{\"artist\":[%v]}", ar))
@@ -382,6 +407,9 @@ func AddFlacId3v2(filename, name, artist, album, picName, MusicMarker string, op
 	}
 
 	artwork, err := ioutil.ReadFile(picPath + "/" + picName)
+	if err != nil {
+		log.Error(err)
+	}
 
 	var mime string
 	fileCode := bytesToHexString(artwork)

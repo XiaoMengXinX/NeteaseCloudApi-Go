@@ -8,11 +8,16 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DownloadSong(id string, options map[string]interface{}) (fileName []string) {
+func DownloadSong(id string, resultCache,options map[string]interface{}) (fileName []string) {
 	var url, filename, savePath string
+	var result map[string]interface{}
 	savePath = "./"
 	//startTime := time.Now()
-	result := GetSongUrl(id, options)
+	if _, ok := resultCache["SongUrl"].(map[string]interface{}); ok {
+		result = resultCache["SongUrl"].(map[string]interface{})
+	} else {
+		result = GetSongUrl(id, options)
+	}
 	threads := 4
 	if _, ok := options["threads"].(int); ok {
 		threads = options["threads"].(int)

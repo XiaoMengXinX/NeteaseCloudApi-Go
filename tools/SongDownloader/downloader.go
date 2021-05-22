@@ -135,7 +135,13 @@ func main() {
 	if *musicid != "" {
 		var ids []string
 		ids = append(ids, *musicid)
-		SongDownloader.DownloadSongWithMetadata(ids, options)
+		//SongDetail := utils.GetSongDetail(*musicid, options)
+		//SongUrl := utils.GetSongUrl(*musicid, options)
+		//resultCache := make(map[string]interface{})
+		//resultCache["SongDetail"] = SongDetail
+		//resultCache["SongUrl"] = SongUrl
+		//SongDownloader.DownloadSongWithMetadata(ids, resultCache, options)
+		SongDownloader.DownloadSongWithMetadata(ids, make(map[string]interface{}), options)
 	}
 	if *playlistid != "" {
 		if *playlistoffset != 0 {
