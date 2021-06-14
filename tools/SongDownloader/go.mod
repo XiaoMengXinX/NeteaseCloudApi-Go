@@ -3,7 +3,7 @@ module github.com/XiaoMengXinX/NeteaseCloudApi-Go/tools/SongDownloader
 go 1.15
 
 require (
-	github.com/XiaoMengXinX/NeteaseCloudApi-Go v0.0.0-20210522151612-d7a7b9831369
+	github.com/XiaoMengXinX/NeteaseCloudApi-Go v0.0.0
 	github.com/bogem/id3v2 v1.2.0
 	github.com/ddliu/go-httpclient v0.6.9 // indirect
 	github.com/google/go-cmp v0.5.4 // indirect
