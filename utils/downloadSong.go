@@ -8,7 +8,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-func DownloadSong(id string, resultCache,options map[string]interface{}) (fileName []string) {
+func DownloadSong(id string, resultCache, options map[string]interface{}) (fileName []string) {
 	var url, filename, savePath string
 	var result map[string]interface{}
 	savePath = "./"
@@ -46,6 +46,11 @@ func DownloadSong(id string, resultCache,options map[string]interface{}) (fileNa
 			//}
 			downloader := downloader.NewDownloader(savePath)
 			downloader.AppendResource(filename, url)
+			if _, ok := options["dieableBar"].(bool); ok {
+				if options["dieableBar"].(bool) {
+					downloader.DisableProgressBar = true
+				}
+			}
 			downloader.Concurrent = threads
 			err := downloader.Start()
 			if err != nil {
@@ -98,6 +103,11 @@ func MultiDownloadSong(ids []string, options map[string]interface{}) (fileName, 
 			} else {
 				fileName = append(fileName, "null")
 			}
+		}
+	}
+	if _, ok := options["dieableBar"].(bool); ok {
+		if options["dieableBar"].(bool) {
+			downloader.DisableProgressBar = false
 		}
 	}
 	downloader.Concurrent = threads

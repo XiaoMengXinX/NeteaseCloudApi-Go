@@ -19,12 +19,13 @@ type Resource struct {
 }
 
 type Downloader struct {
-	wg         *sync.WaitGroup
-	pool       chan *Resource
-	Concurrent int
-	HttpClient http.Client
-	TargetDir  string
-	Resources  []Resource
+	wg          *sync.WaitGroup
+	pool        chan *Resource
+	Concurrent  int
+	DisableProgressBar bool
+	HttpClient  http.Client
+	TargetDir   string
+	Resources   []Resource
 }
 
 func NewDownloader(targetDir string) *Downloader {
@@ -65,23 +66,28 @@ func (d *Downloader) Download(resource Resource, progress *mpb.Progress) error {
 		return err
 	}
 	defer resp.Body.Close()
-	fileSize, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
-	// 创建一个进度条
-	bar := progress.AddBar(
-		int64(fileSize),
-		// 进度条前的修饰
-		mpb.PrependDecorators(
-			decor.CountersKibiByte("% .2f / % .2f"), // 已下载数量
-			decor.Percentage(decor.WCSyncSpace),     // 进度百分比
-		),
-		// 进度条后的修饰
-		mpb.AppendDecorators(
-			decor.EwmaETA(decor.ET_STYLE_GO, 90),
-			decor.Name(" | "),
-			decor.EwmaSpeed(decor.UnitKiB, "% .2f", 60),
-		),
-	)
-	reader := bar.ProxyReader(resp.Body)
+	var reader io.ReadCloser
+	if d.DisableProgressBar {
+		reader = io.ReadCloser(resp.Body)
+	} else {
+		fileSize, _ := strconv.Atoi(resp.Header.Get("Content-Length"))
+		// 创建一个进度条
+		bar := progress.AddBar(
+			int64(fileSize),
+			// 进度条前的修饰
+			mpb.PrependDecorators(
+				decor.CountersKibiByte("% .2f / % .2f"), // 已下载数量
+				decor.Percentage(decor.WCSyncSpace),     // 进度百分比
+			),
+			// 进度条后的修饰
+			mpb.AppendDecorators(
+				decor.EwmaETA(decor.ET_STYLE_GO, 90),
+				decor.Name(" | "),
+				decor.EwmaSpeed(decor.UnitKiB, "% .2f", 60),
+			),
+		)
+		reader = bar.ProxyReader(resp.Body)
+	}
 	defer reader.Close()
 	// 将下载的文件流拷贝到临时文件
 	if _, err := io.Copy(target, reader); err != nil {
