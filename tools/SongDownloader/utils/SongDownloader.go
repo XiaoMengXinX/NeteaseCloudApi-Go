@@ -30,19 +30,20 @@ import (
 var musicPath, picPath string = "./pic", "./music"
 var fileNameStyle int = 1
 
-func DownloadSongWithMetadata(ids []string, resultCache, options map[string]interface{}) error {
+func DownloadSongWithMetadata(ids []string, resultCache, options map[string]interface{}) (file string, err error) {
 	startTime := time.Now()
 	var fileName, validIds []string
+	var newFilename string
 	if len(ids) == 1 && resultCache["SongUrl"] != nil {
 		if _, ok := resultCache["SongUrl"].(map[string]interface{}); ok {
 			if resultCache["SongUrl"].(map[string]interface{})["body"].(map[string]interface{})["data"].([]interface{})[0].(map[string]interface{})["url"] != nil {
 				fileName = utils.DownloadSong(ids[0], resultCache, options)
 				validIds = []string{ids[0]}
 			} else {
-				return fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
+				return "", fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
 			}
 		} else {
-			return fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
+			return "", fmt.Errorf("获取 musicid : %s 下载链接失败", ids[0])
 		}
 	} else {
 		fileName, validIds = utils.MultiDownloadSong(ids, options)
@@ -103,7 +104,6 @@ func DownloadSongWithMetadata(ids []string, resultCache, options map[string]inte
 				//}
 				var replacer = strings.NewReplacer("/", " ", "?", " ", "*", " ", ":", " ", "|", " ", "\\", " ", "<", " ", ">", " ", "\"", " ")
 
-				var newFilename string
 				switch fileNameStyle {
 				case 1:
 					newFilename = replacer.Replace(fmt.Sprintf("%v - %v%v", strings.Replace(artist, "/", ",", -1), name, path.Ext(filename)))
@@ -122,7 +122,7 @@ func DownloadSongWithMetadata(ids []string, resultCache, options map[string]inte
 			}
 		}
 	}
-	return nil
+	return newFilename, nil
 }
 
 func DownloadPLaylistWithMetadata(id string, offset int, options map[string]interface{}) {
