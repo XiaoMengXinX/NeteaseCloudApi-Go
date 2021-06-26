@@ -107,7 +107,7 @@ func MultiDownloadSong(ids []string, options map[string]interface{}) (fileName, 
 	}
 	if _, ok := options["dieableBar"].(bool); ok {
 		if options["dieableBar"].(bool) {
-			downloader.DisableProgressBar = false
+			downloader.DisableProgressBar = true
 		}
 	}
 	downloader.Concurrent = threads
