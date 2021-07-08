@@ -46,8 +46,8 @@ func DownloadSong(id string, resultCache, options map[string]interface{}) (fileN
 			//}
 			downloader := downloader.NewDownloader(savePath)
 			downloader.AppendResource(filename, url)
-			if _, ok := options["dieableBar"].(bool); ok {
-				if options["dieableBar"].(bool) {
+			if _, ok := options["disableBar"].(bool); ok {
+				if options["disableBar"].(bool) {
 					downloader.DisableProgressBar = true
 				}
 			}
