@@ -105,8 +105,8 @@ func MultiDownloadSong(ids []string, options map[string]interface{}) (fileName, 
 			}
 		}
 	}
-	if _, ok := options["dieableBar"].(bool); ok {
-		if options["dieableBar"].(bool) {
+	if _, ok := options["disableBar"].(bool); ok {
+		if options["disableBar"].(bool) {
 			downloader.DisableProgressBar = true
 		}
 	}
